@@ -640,154 +640,364 @@ FlexDI is great for unit testing thanks to its ability to easily replace depende
 ### Mocking Services
 
 ```typescript
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { Inject, Injectable, Module, ModuleManager } from 'flexdi';
+import { Inject, Injectable, Module, ModuleManager, ModuleManagerFactory } from 'flexdi'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-// Original service
-@Injectable()
-class DataService {
-  getData() {
-    return ['real', 'data'];
-  }
+abstract class DataService {
+  abstract getData(): string[]
 }
 
 // Mock service
 @Injectable()
-class MockDataService {
-  getData = vi.fn().mockReturnValue(['test', 'data']);
+class MockDataService extends DataService {
+  getData = vi.fn().mockReturnValue(['test', 'data'])
 }
 
 // Service being tested
 @Injectable()
 class UserService {
   constructor(@Inject(DataService) private dataService: DataService) {}
-  
+
   processData() {
-    const data = this.dataService.getData();
-    return data.map(item => item.toUpperCase());
+    const data = this.dataService.getData()
+    return data.map(item => item.toUpperCase())
   }
 }
 
 // Test module with mock
 @Module({
   providers: [
-    { provide: DataService, useClass: MockDataService },
-    { provide: UserService, useClass: UserService }
+    {provide: DataService, useClass: MockDataService},
+    {provide: UserService, useClass: UserService}
   ],
   exports: [UserService, DataService]
 })
 class TestModule {}
 
 describe('UserService', () => {
-  let userService: UserService;
-  let mockDataService: MockDataService;
-  let testModuleManager: ModuleManager;
-  
+  let userService: UserService
+  let mockDataService: MockDataService
+  let testModuleManager: ModuleManager
+
   beforeEach(async () => {
     // Create a new ModuleManager instance for complete test isolation
-    testModuleManager = new ModuleManager();
-    
+    ModuleManagerFactory.resetInstance()
+    testModuleManager = ModuleManagerFactory.getInstance()
+
     // Load the test module with our isolated ModuleManager
-    await testModuleManager.loadModule(TestModule, true);
-    
+    await testModuleManager.loadModule(TestModule, true)
+
     // Get services from the test module
-    userService = testModuleManager.getService<UserService>(TestModule, UserService);
-    mockDataService = testModuleManager.getService<MockDataService>(TestModule, DataService);
-  });
-  
+    userService = testModuleManager.getService<UserService>(TestModule, UserService)
+    mockDataService = testModuleManager.getService<MockDataService>(TestModule, DataService)
+  })
+
   it('should process data correctly', () => {
     // Check mock service call
-    const result = userService.processData();
-    expect(mockDataService.getData).toHaveBeenCalled();
-    expect(result).toEqual(['TEST', 'DATA']);
-  });
-});
+    const result = userService.processData()
+    expect(mockDataService.getData).toHaveBeenCalled()
+    expect(result).toEqual(['TEST', 'DATA'])
+  })
+})
+
 ```
 
 ### Testing Presenters
 
 ```typescript
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { BehaviorSubject } from 'rxjs';
-import { Inject, Injectable, Module, moduleManager, preloadModule } from 'flexdi';
-import { BasicPresenter } from 'flexdi/react';
+import { BehaviorSubject, firstValueFrom } from 'rxjs'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { Inject, Injectable, Module, BasicPresenter, ModuleManager } from 'flexdi'
+
+interface User {
+  name: string
+}
+
+abstract class AuthService {
+  abstract isAuthenticated(): boolean
+
+  abstract getUser(): User | null
+}
 
 // Mock service
 @Injectable()
-class MockAuthService {
-  isAuthenticated = vi.fn().mockReturnValue(true);
-  getUser = vi.fn().mockReturnValue({ id: 1, name: 'Test User' });
+class MockAuthService extends AuthService {
+  isAuthenticated = vi.fn().mockReturnValue(true)
+  getUser = vi.fn().mockReturnValue({id: 1, name: 'Test User'})
 }
 
 // Presenter to test
 @Injectable()
 class UserPresenter extends BasicPresenter<void> {
-  private user = new BehaviorSubject<any>(null);
-  
-  constructor(@Inject('AuthService') private authService: MockAuthService) {
-    super();
+  private user = new BehaviorSubject<User | null>(null)
+
+  constructor(@Inject(AuthService) private authService: AuthService) {
+    super()
   }
-  
+
   ready() {
     if (this.authService.isAuthenticated()) {
-      this.user.next(this.authService.getUser());
+      this.user.next(this.authService.getUser())
     }
   }
-  
+
   destroy() {
-    this.user.complete();
+    this.user.complete()
   }
-  
+
   getUser() {
-    return this.user.asObservable();
+    return this.user.asObservable()
   }
 }
 
 @Module({
   providers: [
-    { provide: 'AuthService', useClass: MockAuthService },
-    { provide: UserPresenter, useClass: UserPresenter }
+    {provide: AuthService, useClass: MockAuthService},
+    {provide: UserPresenter, useClass: UserPresenter}
   ],
-  exports: ['AuthService', UserPresenter]
+  exports: [AuthService, UserPresenter]
 })
 class TestModule {}
 
 describe('UserPresenter', () => {
-  let presenter: UserPresenter;
-  let mockAuthService: MockAuthService;
-  let testModuleManager: ModuleManager;
-  
+  let presenter: UserPresenter
+  let mockAuthService: MockAuthService
+  let testModuleManager: ModuleManager
+
   beforeEach(async () => {
     // Create a new ModuleManager instance for complete test isolation
-    testModuleManager = new ModuleManager();
-    
+    testModuleManager = new ModuleManager()
+
     // Load the test module with our isolated ModuleManager
-    await testModuleManager.loadModule(TestModule, true);
-    
+    await testModuleManager.loadModule(TestModule, true)
+
     // Get services from the test module
-    presenter = testModuleManager.getService<UserPresenter>(TestModule, UserPresenter);
-    mockAuthService = testModuleManager.getService<MockAuthService>(TestModule, 'AuthService');
-    
+    presenter = testModuleManager.getService<UserPresenter>(TestModule, UserPresenter)
+    mockAuthService = testModuleManager.getService<MockAuthService>(TestModule, AuthService)
+
     // Manual init call, simulating lifecycle
-    presenter.init();
-  });
-  
+    presenter.init()
+  })
+
   it('should load user when authenticated', async () => {
-    // Using a simple approach for testing observables
-    let userValue;
-    const subscription = presenter.getUser().subscribe(user => {
-      userValue = user;
-    });
+    const user = await firstValueFrom(presenter.getUser())
+
+    expect(mockAuthService.isAuthenticated).toHaveBeenCalled()
+    expect(mockAuthService.getUser).toHaveBeenCalled()
+    expect(user?.name).toBe('Test User')
+  })
+})
+```
+
+### Testing React hooks
+```typescript jsx
+import { render, screen, waitFor } from '@testing-library/react'
+import React, { useLayoutEffect, useRef } from 'react'
+import { BehaviorSubject, Observable, Subject, takeUntil } from 'rxjs'
+import { beforeEach, describe, expect, it } from 'vitest'
+import {
+  BasicPresenter,
+  Inject,
+  Injectable,
+  Module,
+  ModuleManager,
+  ModuleManagerFactory,
+  ModuleProvider,
+} from 'flexdi'
+
+import {useInject, useObservable, usePresenter} from 'flexdi/react'
+import '@testing-library/jest-dom'
+
+interface User {
+  id: number;
+  name: string;
+  email: string;
+}
+
+abstract class UserService {
+  abstract getUsers(): Observable<User[]>;
+}
+
+@Injectable()
+class MockUserService extends UserService {
+  private users = new BehaviorSubject<User[]>([
+    {id: 1, name: 'John Doe', email: 'john@example.com'},
+    {id: 2, name: 'Jane Smith', email: 'jane@example.com'}
+  ])
+
+  getUsers(): Observable<User[]> {
+    return this.users.asObservable()
+  }
+
+  updateUsers(users: User[]): void {
+    this.users.next(users)
+  }
+}
+
+@Injectable()
+class UserPresenter extends BasicPresenter<void> {
+  private filteredUsers = new BehaviorSubject<User[]>([])
+
+  constructor(@Inject(UserService) private userService: UserService) {
+    super()
+  }
+
+  ready(): void {
+    this.userService.getUsers().subscribe(users => {
+      this.filteredUsers.next(users)
+    })
+  }
+
+  destroy(): void {
+    this.filteredUsers.complete()
+  }
+
+  getUsers(): Observable<User[]> {
+    return this.filteredUsers.asObservable()
+  }
+
+  filterUsersByName(query: string): void {
+    this.userService.getUsers().subscribe(users => {
+      if (!query) {
+        this.filteredUsers.next(users)
+        return
+      }
+
+      const filtered = users.filter(user =>
+        user.name.toLowerCase().includes(query.toLowerCase())
+      )
+      this.filteredUsers.next(filtered)
+    })
+  }
+}
+
+@Module({
+  providers: [
+    {provide: UserService, useClass: MockUserService},
+    {provide: UserPresenter, useClass: UserPresenter}
+  ],
+  exports: [UserService, UserPresenter]
+})
+class TestModule {}
+
+
+function UserList() {
+  const presenter = usePresenter(UserPresenter)
+  const userService = useInject(UserService)
+  const users = useObservable(presenter.getUsers(), [])
+  const destroySubject = useRef(new Subject<void>())
+
+  const totalUsers = React.useMemo(() => {
+    let count = 0
+    userService.getUsers()
+      .pipe(takeUntil(destroySubject.current))
+      .subscribe(users => {
+      count = users.length
+    })
+    return count
+  }, [userService, destroySubject.current])
+
+  useLayoutEffect(() => {
+    return () => {
+      destroySubject.current.next()
+      destroySubject.current.complete()
+    }
+  }, [destroySubject.current])
+
+  return (
+    <div>
+      <h1>User List</h1>
+      <p data-testid='user-count-presenter'>Total users in presenter: {users.length}</p>
+      <p data-testid='user-count-service'>Total users in service: {totalUsers}</p>
+      {users.length === 0 ? (
+        <p data-testid='empty-message'>No users found</p>
+      ) : (
+        <ul data-testid='user-list'>
+          {users.map(user => (
+            <li key={user.id} data-testid={`user-${user.id}`}>
+              <strong>{user.name}</strong> ({user.email})
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
+
+function TestApp() {
+  return (
+    <ModuleProvider module={TestModule}>
+      <UserList />
+    </ModuleProvider>
+  )
+}
+
+describe('UserList Component with DI', () => {
+  let testModuleManager: ModuleManager
+  let mockUserService: MockUserService
+
+  beforeEach(async () => {
+    ModuleManagerFactory.resetInstance()
+    testModuleManager = ModuleManagerFactory.getInstance()
+    await testModuleManager.loadModule(TestModule, true)
+
+    mockUserService = testModuleManager.getService<MockUserService>(TestModule, UserService)
+  })
+
+  it('renders the user list correctly', async () => {
+    render(<TestApp />)
     
-    // Give time for the data to be emitted
-    await new Promise(resolve => setTimeout(resolve, 50));
-    subscription.unsubscribe();
+    expect(screen.getByText('User List')).toBeInTheDocument()
     
-    expect(mockAuthService.isAuthenticated).toHaveBeenCalled();
-    expect(mockAuthService.getUser).toHaveBeenCalled();
-    expect(userValue.name).toBe('Test User');
-  });
-});
+    const userCountPresenter = screen.getByTestId('user-count-presenter')
+    expect(userCountPresenter).toBeInTheDocument()
+    expect(userCountPresenter).toHaveTextContent(/Total users in presenter/)
+
+    const userCountService = screen.getByTestId('user-count-service')
+    expect(userCountService).toBeInTheDocument()
+    expect(userCountService).toHaveTextContent(/Total users in service/)
+    
+    await waitFor(() => {
+      expect(screen.getByTestId('user-list')).toBeInTheDocument()
+    })
+    
+    expect(screen.getByTestId('user-1')).toBeInTheDocument()
+    expect(screen.getByTestId('user-2')).toBeInTheDocument()
+    
+    expect(screen.getByText('John Doe')).toBeInTheDocument()
+    expect(screen.getByText(/jane@example.com/)).toBeInTheDocument()
+  })
+
+  it('shows empty message when no users', async () => {
+    mockUserService.updateUsers([])
+
+    render(<TestApp />)
+    
+    await waitFor(() => {
+      expect(screen.getByTestId('empty-message')).toBeInTheDocument()
+    })
+    expect(screen.getByText('No users found')).toBeInTheDocument()
+  })
+
+  it('updates when user service changes', async () => {
+    render(<TestApp />)
+    
+    await waitFor(() => {
+      expect(screen.getByTestId('user-list')).toBeInTheDocument()
+    })
+    expect(screen.getByText('John Doe')).toBeInTheDocument()
+    
+    const newUsers = [
+      {id: 3, name: 'Bob Johnson', email: 'bob@example.com'}
+    ]
+    mockUserService.updateUsers(newUsers)
+    
+    await waitFor(() => {
+      expect(screen.getByText('Bob Johnson')).toBeInTheDocument()
+    })
+    expect(screen.queryByText('John Doe')).not.toBeInTheDocument()
+  })
+})
 ```
 
 ## Supporting the Project

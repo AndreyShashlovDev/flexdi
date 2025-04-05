@@ -1,20 +1,13 @@
 import 'reflect-metadata'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { Injectable, Module, moduleManager, OnDisposeInstance, preloadModule } from '../src'
+import { Injectable, Module, ModuleManager, ModuleManagerFactory, OnDisposeInstance, preloadModule } from '../src'
 
 describe('onDisposeInstance Lifecycle', () => {
+  let moduleManager: ModuleManager
+
   beforeEach(() => {
-    const moduleRefs = (moduleManager as any).moduleRefs
-    if (moduleRefs && moduleRefs instanceof Map) {
-      moduleRefs.clear()
-    }
-
-    const globalModuleRefs = (moduleManager as any).globalModuleRefs
-    if (globalModuleRefs && globalModuleRefs instanceof Map) {
-      globalModuleRefs.clear()
-    }
-
-    (moduleManager as any).rootModuleRef = null
+    ModuleManagerFactory.resetInstance()
+    moduleManager = ModuleManagerFactory.getInstance()
   })
 
   test('onDisposeInstance is called when module is unloaded', async () => {

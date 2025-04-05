@@ -1,16 +1,14 @@
 import 'reflect-metadata'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { Inject, Injectable, Module, moduleManager, preloadModule, Scope } from '../src'
+import { Inject, Injectable, Module, ModuleManager, ModuleManagerFactory, preloadModule, Scope } from '../src'
 
 describe('Module System', () => {
+  let moduleManager: ModuleManager
+
   // Prepare test classes
   beforeEach(() => {
-    // Clear modules in moduleManager
-    const moduleRefs = (moduleManager as any).moduleRefs
-    if (moduleRefs && moduleRefs instanceof Map) {
-      moduleRefs.clear()
-    }
-    (moduleManager as any).rootModuleRef = null
+    ModuleManagerFactory.resetInstance()
+    moduleManager = ModuleManagerFactory.getInstance()
   })
 
   describe('Basic Functionality', () => {

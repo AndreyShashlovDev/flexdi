@@ -1,4 +1,4 @@
-import { ComponentType, FC, ReactNode } from 'react';
+import React, { ComponentType, FC, ReactNode } from 'react';
 import { ModuleType } from '../../core';
 export declare let ENABLE_STRICT_MODE: boolean;
 export interface ErrorBoundaryProps {
@@ -15,5 +15,5 @@ export interface ModuleLoaderProps {
 export interface RootModuleLoader extends ModuleLoaderProps {
     enableStrictMode: boolean;
 }
-export declare function RootModuleLoader({ module, children, ErrorBoundary, LoadingComponent, ErrorComponent, enableStrictMode, }: RootModuleLoader): JSX.Element;
-export declare function ModuleLoader({ module, children, ErrorBoundary, LoadingComponent, ErrorComponent, }: ModuleLoaderProps): JSX.Element;
+export declare function RootModuleLoader({ module, children, ErrorBoundary, LoadingComponent, ErrorComponent, enableStrictMode, }: RootModuleLoader): React.JSX.Element;
+export declare function ModuleLoader({ module, children, ErrorBoundary, LoadingComponent, ErrorComponent, }: ModuleLoaderProps): React.JSX.Element;

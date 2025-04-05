@@ -1,10 +1,14 @@
 import 'reflect-metadata';
+import { ModuleRef } from './ModuleRef';
 import { Abstract, InjectionToken, ModuleOptions, ModuleType, Scope } from './types';
 export declare const INJECT_METADATA_KEY: unique symbol;
 export declare const INJECTABLE_METADATA_KEY: unique symbol;
 export declare const MODULE_METADATA_KEY: unique symbol;
 export declare const SCOPE_METADATA_KEY: unique symbol;
 export declare const SINGLETON_MODULE_METADATA_KEY: unique symbol;
+export declare function getModuleOptions(moduleClass: ModuleType): ModuleOptions;
+export declare function isSingletonModule(targetClass: ModuleType): boolean;
+export declare const getTokenDebugName: (token: InjectionToken<unknown>) => string;
 export declare const getTokenName: (token: InjectionToken<unknown>) => string | symbol | Abstract<any>;
 export declare class ProviderRef {
     readonly token: string | symbol | Abstract<any>;
@@ -17,27 +21,6 @@ export declare class ProviderRef {
     sourceModule: string;
     constructor(token: string | symbol | Abstract<any>, type: 'class' | 'value' | 'factory' | 'token', moduleRef: ModuleRef);
     resolve(): Promise<any>;
-    dispose(): void;
-}
-export declare class ModuleRef {
-    readonly options: ModuleOptions;
-    readonly moduleClass: ModuleType;
-    readonly isSingleton: boolean;
-    providers: Map<string | symbol | Abstract<any>, ProviderRef>;
-    imports: ModuleRef[];
-    exports: Set<string | symbol | Abstract<any>>;
-    initialized: boolean;
-    initializing: boolean;
-    rootModule: ModuleRef | null;
-    instanceCache: Map<string | symbol | Abstract<any>, any>;
-    constructor(options: ModuleOptions, moduleClass: ModuleType, isSingleton: boolean);
-    get name(): string;
-    isExported(token: InjectionToken<unknown>): boolean;
-    getLocalProvider(token: InjectionToken<unknown>): ProviderRef | null;
-    resolveProvider(token: InjectionToken<unknown>): Promise<any>;
-    initialize(rootModule?: ModuleRef | null): Promise<void>;
-    private preInitializeExports;
-    private registerProvider;
     dispose(): void;
 }
 export declare class ModuleManager {
@@ -56,4 +39,3 @@ export declare class ModuleManager {
     unloadModule(moduleClass: ModuleType): void;
     private findDependentModules;
 }
-export declare const moduleManager: ModuleManager;

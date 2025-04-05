@@ -1,20 +1,13 @@
 import 'reflect-metadata'
 import { beforeEach, describe, expect, test } from 'vitest'
-import { Inject, Injectable, Module, moduleManager, preloadModule, Singleton } from '../src'
+import { Inject, Injectable, Module, ModuleManager, ModuleManagerFactory, preloadModule, Singleton } from '../src'
 
 describe('Singleton Modules', () => {
+  let moduleManager: ModuleManager
+
   beforeEach(() => {
-    const moduleRefs = (moduleManager as any).moduleRefs
-    if (moduleRefs && moduleRefs instanceof Map) {
-      moduleRefs.clear()
-    }
-
-    const globalModuleRefs = (moduleManager as any).globalModuleRefs
-    if (globalModuleRefs && globalModuleRefs instanceof Map) {
-      globalModuleRefs.clear()
-    }
-
-    (moduleManager as any).rootModuleRef = null
+    ModuleManagerFactory.resetInstance()
+    moduleManager = ModuleManagerFactory.getInstance()
   })
 
   test('Singleton modules must be explicitly imported in each module that uses them', async () => {

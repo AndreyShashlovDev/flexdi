@@ -1,5 +1,5 @@
 import { useLayoutEffect, useMemo, useRef } from 'react'
-import { BasicPresenter, InjectionToken, moduleManager } from '../../core'
+import { BasicPresenter, InjectionToken, ModuleManagerFactory } from '../../core'
 import { ENABLE_STRICT_MODE } from '../provider'
 import { useCurrentModule } from './useCurrentModule'
 
@@ -14,7 +14,7 @@ export function usePresenter<T extends BasicPresenter<A>, A>(
 
   const presenter = useMemo(() => {
     try {
-      return moduleManager.getService<T>(moduleClass, presenterToken)
+      return ModuleManagerFactory.getInstance().getService<T>(moduleClass, presenterToken)
     } catch (error) {
       console.warn(
         `Could not resolve presenter ${String(presenterToken)} from module ${moduleClass.name}, trying root container...`,

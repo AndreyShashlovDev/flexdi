@@ -1,5 +1,5 @@
 import React, { FC, ReactNode, useEffect, useRef, useState } from 'react'
-import { moduleManager, ModuleType, preloadModule } from '../../core'
+import { ModuleManagerFactory, ModuleType, preloadModule } from '../../core'
 
 interface ModuleGuardParams {
   module: ModuleType
@@ -17,7 +17,7 @@ export const ModuleGuard = ({
   isRootModule = false,
 }: ModuleGuardParams) => {
   const isLoading = useRef<boolean>(false)
-  const [isLoaded, setIsLoaded] = useState<boolean>(moduleManager.isModuleLoaded(module))
+  const [isLoaded, setIsLoaded] = useState<boolean>(ModuleManagerFactory.getInstance().isModuleLoaded(module))
   const [error, setError] = useState<Error | null>(null)
 
   useEffect(() => {
@@ -44,7 +44,7 @@ export const ModuleGuard = ({
       setIsLoaded(false)
       isLoading.current = false
 
-      moduleManager.unloadModule(module)
+      ModuleManagerFactory.getInstance().unloadModule(module)
     }
   }, [module])
 

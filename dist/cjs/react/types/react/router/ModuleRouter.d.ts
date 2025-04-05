@@ -1,4 +1,4 @@
-import { ComponentType, FC, LazyExoticComponent } from 'react';
+import React, { ComponentType, FC, LazyExoticComponent } from 'react';
 import { ModuleType } from '../../core';
 import { ErrorBoundaryProps } from '../provider/ModuleLoader';
 interface ModuleRouteParams {
@@ -11,6 +11,6 @@ interface ModuleRouteParams {
 }
 export declare function createModuleRoute({ path, module, Component, ErrorBoundary, LoadingComponent, ErrorComponent, }: ModuleRouteParams): {
     path: string;
-    element: JSX.Element;
+    element: React.JSX.Element;
 };
 export {};

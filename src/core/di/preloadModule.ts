@@ -1,6 +1,6 @@
-import { moduleManager } from './Dependency'
+import { ModuleManagerFactory } from './ModuleManagerFactory'
 import { ModuleType } from './types'
 
 export const preloadModule = async (moduleClass: ModuleType, isRootModule: boolean): Promise<void> => {
-  await moduleManager.loadModule(moduleClass, isRootModule)
+  await ModuleManagerFactory.getInstance().loadModule(moduleClass, isRootModule)
 }

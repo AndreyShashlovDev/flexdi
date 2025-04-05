@@ -1,5 +1,5 @@
 import React, { ReactNode, useEffect } from 'react'
-import { moduleManager, ModuleType } from '../../core'
+import { ModuleManagerFactory, ModuleType } from '../../core'
 import { ModuleContext } from './ModuleContext'
 
 interface ModuleProviderProps {
@@ -12,6 +12,8 @@ export const ModuleProvider = ({module, children}: ModuleProviderProps) => {
     let mounted = true
 
     const loadModuleAsync = async () => {
+      const moduleManager = ModuleManagerFactory.getInstance()
+
       try {
         if (!moduleManager.isModuleLoaded(module)) {
           await moduleManager.loadModule(module)
