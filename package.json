@@ -16,14 +16,14 @@
   "type": "module",
   "exports": {
     ".": {
+      "types": "./dist/types/core/index.d.ts",
       "import": "./dist/esm/core/index.js",
-      "require": "./dist/cjs/core/index.js",
-      "types": "./dist/types/core/index.d.ts"
+      "require": "./dist/cjs/core/index.js"
     },
     "./react": {
+      "types": "./dist/types/react/index.d.ts",
       "import": "./dist/esm/react/index.js",
-      "require": "./dist/cjs/react/index.js",
-      "types": "./dist/types/react/index.d.ts"
+      "require": "./dist/cjs/react/index.js"
     }
   },
   "files": [
@@ -83,6 +83,6 @@
     "semantic-release": "^24.2.3",
     "tslib": "^2.5.0",
     "typescript": "^5.0.4",
-    "vitest": "^0.31.0"
+    "vitest": "^3.1.1"
   }
 }
