@@ -1,3 +1,10 @@
+## [0.2.3](https://github.com/AndreyShashlovDev/flexdi/compare/0.2.2...0.2.3) (2025-04-06)
+
+
+### Bug Fixes
+
+* synchronize branches for release ([4a44391](https://github.com/AndreyShashlovDev/flexdi/commit/4a44391edbfbbd3238c9ec2f41dd1a12b6de178e))
+
 ## [0.2.2](https://github.com/AndreyShashlovDev/flexdi/compare/0.2.1...0.2.2) (2025-04-06)
 
 
