@@ -1,3 +1,11 @@
+## [0.2.2](https://github.com/AndreyShashlovDev/flexdi/compare/0.2.1...0.2.2) (2025-04-06)
+
+
+### Bug Fixes
+
+* docs improvements. ([d8fc0f9](https://github.com/AndreyShashlovDev/flexdi/commit/d8fc0f9dd6a0b192ff2750290af8315f02466ba8))
+* rxjs as optional lib. ([3accf50](https://github.com/AndreyShashlovDev/flexdi/commit/3accf50ab2ec24c3b216882fc4ac2c922edc390a))
+
 ## [0.2.1](https://github.com/AndreyShashlovDev/flexdi/compare/0.2.0...0.2.1) (2025-04-05)
 
 
