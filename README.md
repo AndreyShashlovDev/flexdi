@@ -10,10 +10,45 @@ FlexDI allows you to organize a modular architecture with separation of concerns
 
 ## Installation
 
+### Basic Installation
 ```bash
-npm install flexdi
+npm install flexdi reflect-metadata
 # or
-yarn add flexdi
+yarn add flexdi reflect-metadata
+```
+
+### React Installation
+```bash
+npm install flexdi reflect-metadata react
+# or
+yarn add flexdi reflect-metadata react
+```
+
+### React (useObservable hook) Installation
+```bash
+npm install flexdi reflect-metadata react rxjs
+# or
+yarn add flexdi reflect-metadata react rxjs
+```
+## Project configuration
+### Reflect Metadata
+Add the reflect-metadata import at your application's entry point (before using any decorators):
+
+```typescript
+// index.ts or app.ts or main.ts (your entry file)
+import 'reflect-metadata';
+// ... rest of your imports and code
+```
+
+### TypeScript Configuration
+Make sure your tsconfig.json includes:
+```json
+{
+  "compilerOptions": {
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
+  }
+}
 ```
 
 ## Core Concepts
@@ -32,12 +67,14 @@ FlexDI is built on the following concepts:
 ```typescript
 import { Module } from 'flexdi';
 import { AuthService } from './services/auth.service';
+import { AuthServiceImpl } from './services/auth.service.impl';
 import { UserService } from './services/user.service';
+import { UserServiceImpl } from './services/user.service.impl';
 
 @Module({
   providers: [
-    { provide: AuthService, useClass: AuthService },
-    { provide: UserService, useClass: UserService }
+    { provide: AuthService, useClass: AuthServiceImpl },
+    { provide: UserService, useClass: UserServiceImpl }
   ],
   exports: [AuthService, UserService]
 })
@@ -51,7 +88,7 @@ import { Inject, Injectable } from 'flexdi';
 import { UserRepository } from '../repositories/user.repository';
 
 @Injectable()
-export class UserService {
+export class UserServiceImpl {
   constructor(
     @Inject(UserRepository) private readonly userRepository: UserRepository
   ) {}
@@ -75,10 +112,10 @@ const root = createRoot(document.getElementById('root'));
 root.render(
   <RootModuleLoader
     module={AppModule}
-    ErrorBoundary={DefaultErrorBoundary}
+    ErrorBoundary={ErrorBoundary}
     LoadingComponent={LoadingSpinner}
     ErrorComponent={ErrorView}
-    enableStrictMode={true} // true ONLY if <StrictMode> is used and you are in dev mode
+    enableStrictMode={false} // true ONLY if <StrictMode> is used and you are in dev mode
   >
     <App />
   </RootModuleLoader>
@@ -94,13 +131,13 @@ import { UserPresenter } from './presenters/user.presenter';
 import { BehaviorSubject, Observable } from 'rxjs';
 
 export const UserList = () => {
-  // Using service injection
-  const userService = useInject(UserService);
-
   // Using presenter with automatic initialization and cleanup
   const presenter = usePresenter(UserPresenter);
   const users = useObservable(presenter.getUsers(), []);
-
+  
+  // Using service injection
+  const userService = useInject(UserService);
+  
   return (
     <div>
       <h1>Users</h1>
@@ -131,7 +168,7 @@ Parameters:
 @Module({
   imports: [CommonModule, AuthModule],
   providers: [
-    { provide: UserService, useClass: UserService },
+    { provide: UserService, useClass: UserServiceImpl },
     { provide: 'API_URL', useValue: 'https://api.example.com' }
   ],
   exports: [UserService]
@@ -150,10 +187,10 @@ Marks a class as available for dependency injection. Optionally, you can specify
 
 ```typescript
 @Injectable() // Default is Scope.SINGLETON
-export class UserService {}
+export class UserServiceImpl {}
 
 @Injectable(Scope.TRANSIENT) // New instance on each request
-export class LoggerService {}
+export class LoggerServiceImpl {}
 ```
 
 #### `@Inject`
@@ -167,9 +204,9 @@ Specifies the token for dependency injection in the constructor. The token can b
 ```typescript
 constructor(
   @Inject(UserService) private readonly userService: UserService, // Class
-@Inject('API_URL') private readonly apiUrl: string, // String
-@Inject(Symbol.for('Logger')) private readonly logger: Logger, // Symbol
-@Inject(AbstractRepository) private readonly repo: Repository // Abstract class
+  @Inject('API_URL') private readonly apiUrl: string, // String
+  @Inject(Symbol.for('Logger')) private readonly logger: Logger, // Symbol
+  @Inject(SomeRepository) private readonly repo: Repository // Abstract class
 ) {}
 ```
 
@@ -180,7 +217,7 @@ Marks a module as a singleton that will be created only once and available to al
 ```typescript
 @Singleton()
 @Module({
-  providers: [{ provide: SharedService, useClass: SharedService }],
+  providers: [{ provide: SharedService, useClass: SharedServiceImpl }],
   exports: [SharedService]
 })
 export class SharedModule {}
@@ -195,8 +232,8 @@ A module marked as `@Singleton()` can be created at any time, and from that mome
 ```typescript
 {
   provide: UserService,
-    useClass: UserServiceImpl,
-    scope: Scope.SINGLETON // optional
+  useClass: UserServiceImpl,
+  scope: Scope.SINGLETON // optional
 }
 ```
 
@@ -205,7 +242,7 @@ A module marked as `@Singleton()` can be created at any time, and from that mome
 ```typescript
 {
   provide: 'API_KEY',
-    useValue: 'secret-api-key'
+  useValue: 'secret-api-key'
 }
 ```
 
@@ -214,11 +251,12 @@ A module marked as `@Singleton()` can be created at any time, and from that mome
 ```typescript
 {
   provide: 'ApiClient',
-    useFactory: async (configService, logger) => {
+  deps: [ConfigService, LoggerService],
+    
+  useFactory: async (configService, logger) => {
     const config = await configService.getConfig();
-    return new ApiClient(config.apiUrl, logger);
+    return new ApiClientImpl(config.apiUrl, logger);
   },
-    deps: [ConfigService, LoggerService]
 }
 ```
 
@@ -227,11 +265,11 @@ A module marked as `@Singleton()` can be created at any time, and from that mome
 ```typescript
 {
   provide: 'UserServiceAlias',
-    useToken: UserService
+  useToken: UserService
 }
 ```
 
-### Presenters
+### Basic Presenters
 
 Presenters must inherit from `BasicPresenter` and implement the `ready` and `destroy` methods:
 
@@ -253,7 +291,7 @@ Example of a presenter with access to args:
 
 ```typescript
 @Injectable()
-export class UserPresenter extends BasicPresenter<{ userId: string }> {
+export class UserPresenterImpl extends BasicPresenter<{ userId: string }> {
   private users = new BehaviorSubject<User[]>([]);
 
   constructor(
@@ -295,7 +333,7 @@ Components can implement the `OnDisposeInstance` interface to perform resource c
 ```typescript
 import { OnDisposeInstance } from 'flexdi';
 
-export class DatabaseService implements OnDisposeInstance {
+export class DatabaseServiceImpl implements OnDisposeInstance {
   private connection: Connection;
 
   constructor() {
@@ -333,6 +371,24 @@ export class ConfigModule {}
 
 ## React Integration
 
+### RootModuleLoader
+
+Component for loading the root module of the application:
+
+```tsx
+<RootModuleLoader
+  module={AppModule}
+  ErrorBoundary={ErrorBoundary}
+  LoadingComponent={Loading}
+  ErrorComponent={Error}
+  enableStrictMode={false} // true ONLY if <StrictMode> is used and you are in dev mode
+>
+  <App />
+</RootModuleLoader>
+```
+
+The `enableStrictMode` parameter should be set to `true` ONLY when `<StrictMode>` is used in the application and you are in development mode. Otherwise, be sure to set it to `false`, otherwise the presenters will not receive ready/destroy events and will not work correctly.
+
 ### ModuleLoader
 
 Component for loading a module and its dependencies:
@@ -348,24 +404,6 @@ Component for loading a module and its dependencies:
 </ModuleLoader>
 ```
 
-### RootModuleLoader
-
-Component for loading the root module of the application:
-
-```tsx
-<RootModuleLoader
-  module={AppModule}
-  ErrorBoundary={ErrorBoundary}
-  LoadingComponent={Loading}
-  ErrorComponent={Error}
-  enableStrictMode={true} // true ONLY if <StrictMode> is used and you are in dev mode
->
-  <App />
-</RootModuleLoader>
-```
-
-The `enableStrictMode` parameter should be set to `true` ONLY when `<StrictMode>` is used in the application and you are in development mode. Otherwise, be sure to set it to `false`, otherwise the presenters will not receive ready/destroy events and will not work correctly.
-
 ### useInject
 
 Hook for injecting dependencies into functional components:
@@ -379,7 +417,7 @@ const userService = useInject(UserService);
 Hook for working with presenters, automatically manages their lifecycle:
 
 ```tsx
-// Parameters are passed to the init() method and are available through this.args
+// Parameters are passed to the init(args?: InitArgs) -> ready(args?: InitArgs) method and are available through this.args
 const presenter = usePresenter(UserPresenter, { userId: '123' });
 ```
 
@@ -426,7 +464,7 @@ const appRoutes = [
     path: '/',
     module: HomeModule,
     Component: HomePage,
-    ErrorBoundary: DefaultErrorBoundary,
+    ErrorBoundary: ErrorBoundary,
     LoadingComponent: Loading,
     ErrorComponent: Error
   }),
@@ -434,7 +472,7 @@ const appRoutes = [
     path: '/users',
     module: UserModule,
     Component: UserPage,
-    ErrorBoundary: DefaultErrorBoundary,
+    ErrorBoundary: ErrorBoundary,
     LoadingComponent: Loading,
     ErrorComponent: Error
   })
@@ -512,7 +550,7 @@ class UserPresenter extends BasicPresenter<void> {
 
 @Module({
   imports: [AuthModule],
-  providers: [{ provide: UserPresenter, useClass: UserPresenter }],
+  providers: [{ provide: UserPresenter, useClass: UserPresenterImpl }],
   exports: [UserPresenter]
 })
 class UserModule {}
@@ -536,15 +574,15 @@ const App = () => {
 createRoot(document.getElementById('root')).render(
   <RootModuleLoader
     module={UserModule}
-    ErrorBoundary={DefaultErrorBoundary}
+    ErrorBoundary={ErrorBoundary}
     LoadingComponent={LoadingSpinner}
     ErrorComponent={ErrorView}
-    enableStrictMode={true} // Only if <StrictMode> is used and you are in dev mode
+    enableStrictMode={false} // Only if <StrictMode> is used and you are in dev mode
   >
     <ModuleLoader
       module={AppPageModule}
       children={<App />}
-      ErrorBoundary={DefaultErrorBoundary}
+      ErrorBoundary={ErrorBoundary}
       LoadingComponent={LoadingSpinner}
       ErrorComponent={ErrorView}
     />
@@ -557,7 +595,7 @@ createRoot(document.getElementById('root')).render(
 1. **Code Organization**: Group related services into modules.
 2. **Naming**: Use suffixes for different types of classes (Service, Repository, Presenter).
 3. **Singleton modules**: Use `@Singleton()` for modules that should be available with explicit import without creating new instances.
-4. **Presenters**: Use presenters to separate business logic from React components.
+4. **Presenters**: Use presenters to separate business logic from UI framework.
 5. **Testing**: The library makes testing easier by allowing real implementations to be replaced with mocks.
 
 ## Philosophy and Principles
