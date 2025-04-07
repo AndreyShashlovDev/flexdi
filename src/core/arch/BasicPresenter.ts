@@ -7,7 +7,7 @@ export abstract class BasicPresenter<InitArgs> {
     this.ready(args)
   }
 
-  public abstract ready(args?: InitArgs): void;
+  public abstract ready(args?: InitArgs): void
 
   public abstract destroy(): void
 }
