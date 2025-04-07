@@ -1,3 +1,12 @@
+## [0.2.4](https://github.com/AndreyShashlovDev/flexdi/compare/0.2.3...0.2.4) (2025-04-07)
+
+
+### Bug Fixes
+
+* cannot provide undefined to useObservable as observable ([d0c883e](https://github.com/AndreyShashlovDev/flexdi/commit/d0c883e3136c94c430330fbd2aa83e3a003c64c9))
+* code cleanup (semicolon) ([aa146c5](https://github.com/AndreyShashlovDev/flexdi/commit/aa146c5db4d3bcea7f26a65148f5b1fbfcab2dbc))
+* docs improvements. ([1ec733a](https://github.com/AndreyShashlovDev/flexdi/commit/1ec733a18183c61966ef818d5a48d8a5ddf447c1))
+
 ## [0.2.3](https://github.com/AndreyShashlovDev/flexdi/compare/0.2.2...0.2.3) (2025-04-06)
 
 
