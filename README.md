@@ -36,7 +36,7 @@ Add the reflect-metadata import at your application's entry point (before using 
 
 ```typescript
 // index.ts or app.ts or main.ts (your entry file)
-import 'reflect-metadata';
+import 'reflect-metadata'
 // ... rest of your imports and code
 ```
 
@@ -60,16 +60,21 @@ FlexDI is built on the following concepts:
 - **Dependency Injection** - automatic provision of dependencies to components
 - **Scopes** - managing object lifetimes (Singleton, Transient)
 
+## Working Example
+
+A full-featured React project built using FlexDI can be found in the repository:
+[https://github.com/AndreyShashlovDev/scalpel-frontend](https://github.com/AndreyShashlovDev/scalpel-frontend/tree/master)
+
 ## Using in a React Application
 
 ### Defining a Module
 
 ```typescript
-import { Module } from 'flexdi';
-import { AuthService } from './services/auth.service';
-import { AuthServiceImpl } from './services/auth.service.impl';
-import { UserService } from './services/user.service';
-import { UserServiceImpl } from './services/user.service.impl';
+import { Module } from 'flexdi'
+import { AuthService } from './services/auth.service'
+import { AuthServiceImpl } from './services/auth.service.impl'
+import { UserService } from './services/user.service'
+import { UserServiceImpl } from './services/user.service.impl'
 
 @Module({
   providers: [
@@ -84,8 +89,8 @@ export class AppModule {}
 ### Defining a Service with Dependency Injection
 
 ```typescript
-import { Inject, Injectable } from 'flexdi';
-import { UserRepository } from '../repositories/user.repository';
+import { Inject, Injectable } from 'flexdi'
+import { UserRepository } from '../repositories/user.repository'
 
 @Injectable()
 export class UserServiceImpl {
@@ -94,7 +99,7 @@ export class UserServiceImpl {
   ) {}
 
   async getUsers() {
-    return this.userRepository.getAll();
+    return this.userRepository.getAll()
   }
 }
 ```
@@ -104,39 +109,38 @@ export class UserServiceImpl {
 Applications should always start with a root module:
 
 ```tsx
-import { RootModuleLoader } from 'flexdi/react';
-import { AppModule } from './modules/app.module';
-import { App } from './App';
+import { RootModuleLoader } from 'flexdi/react'
+import { AppModule } from './modules/app.module'
+import { App } from './App'
 
-const root = createRoot(document.getElementById('root'));
+const root = createRoot(document.getElementById('root'))
 root.render(
   <RootModuleLoader
     module={AppModule}
-    ErrorBoundary={ErrorBoundary}
+    ErrorBoundary={ErrorBoundaryView}
     LoadingComponent={LoadingSpinner}
     ErrorComponent={ErrorView}
     enableStrictMode={false} // true ONLY if <StrictMode> is used and you are in dev mode
   >
     <App />
   </RootModuleLoader>
-);
+)
 ```
 
 ### Using Dependencies in React Components
 
 ```tsx
-import { usePresenter, useInject, useObservable } from 'flexdi/react';
-import { UserService } from './services/user.service';
-import { UserPresenter } from './presenters/user.presenter';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { usePresenter, useInject, useObservable } from 'flexdi/react'
+import { UserService } from './services/user.service'
+import { UserPresenter } from './presenters/user.presenter'
 
 export const UserList = () => {
   // Using presenter with automatic initialization and cleanup
-  const presenter = usePresenter(UserPresenter);
-  const users = useObservable(presenter.getUsers(), []);
+  const presenter = usePresenter(UserPresenter)
+  const users = useObservable(presenter.getUsers(), [])
   
   // Using service injection
-  const userService = useInject(UserService);
+  const userService = useInject(UserService)
   
   return (
     <div>
@@ -147,8 +151,8 @@ export const UserList = () => {
         ))}
       </ul>
     </div>
-  );
-};
+  )
+}
 ```
 
 ## Detailed Guide
@@ -254,8 +258,8 @@ A module marked as `@Singleton()` can be created at any time, and from that mome
   deps: [ConfigService, LoggerService],
     
   useFactory: async (configService, logger) => {
-    const config = await configService.getConfig();
-    return new ApiClientImpl(config.apiUrl, logger);
+    const config = await configService.getConfig()
+    return new ApiClientImpl(config.apiUrl, logger)
   },
 }
 ```
@@ -282,7 +286,7 @@ export abstract class BasicPresenter<InitArgs> {
     this.ready(args)
   }
 
-  public abstract ready(args?: InitArgs): void;
+  public abstract ready(args?: InitArgs): void
   public abstract destroy(): void
 }
 ```
@@ -290,38 +294,46 @@ export abstract class BasicPresenter<InitArgs> {
 Example of a presenter with access to args:
 
 ```typescript
+export interface UserPresenterArgs {
+  userId: string
+}
+
+abstract class UserPresenter extends BasicPresenter<UserPresenterArgs> {
+  abstract getUsers(): Observable<User[]>
+}
+
 @Injectable()
-export class UserPresenterImpl extends BasicPresenter<{ userId: string }> {
-  private users = new BehaviorSubject<User[]>([]);
+export class UserPresenterImpl extends UserPresenter {
+  private users = new BehaviorSubject<User[]>([])
 
   constructor(
     @Inject(UserService) private readonly userService: UserService
   ) {
-    super();
+    super()
   }
 
-  public ready(args?: { userId: string }): void {
+  public ready(args?: UserPresenterArgs): void {
     // You can use arguments from args
-    const userId = args?.userId || 'default';
+    const userId = args?.userId || 'default'
 
     // Or through this.args
-    console.log(`Initializing for user: ${this.args?.userId}`);
+    console.log(`Initializing for user: ${this.args?.userId}`)
 
-    this.loadUsers(userId);
+    this.loadUsers(userId)
   }
 
   public destroy(): void {
     // Cleanup resources when component is destroyed
-    this.users.complete();
+    this.users.complete()
   }
 
   private async loadUsers(userId: string): Promise<void> {
-    const users = await this.userService.getUsersByManager(userId);
-    this.users.next(users);
+    const users = await this.userService.getUsersByManager(userId)
+    this.users.next(users)
   }
 
   public getUsers(): Observable<User[]> {
-    return this.users.asObservable();
+    return this.users.asObservable()
   }
 }
 ```
@@ -331,18 +343,18 @@ export class UserPresenterImpl extends BasicPresenter<{ userId: string }> {
 Components can implement the `OnDisposeInstance` interface to perform resource cleanup when a service is unloaded from the DI container:
 
 ```typescript
-import { OnDisposeInstance } from 'flexdi';
+import { OnDisposeInstance } from 'flexdi'
 
 export class DatabaseServiceImpl implements OnDisposeInstance {
-  private connection: Connection;
+  private connection: Connection
 
   constructor() {
-    this.connection = createConnection();
+    this.connection = createConnection()
   }
 
   // Automatically called when the service is unloaded from the DI container
   onDisposeInstance(): void {
-    this.connection.close();
+    this.connection.close()
   }
 }
 ```
@@ -359,8 +371,8 @@ FlexDI supports asynchronous initialization and the use of Promises:
     {
       provide: 'Config',
       useFactory: async () => {
-        const response = await fetch('/api/config');
-        return await response.json();
+        const response = await fetch('/api/config')
+        return await response.json()
       }
     }
   ],
@@ -371,6 +383,41 @@ export class ConfigModule {}
 
 ## React Integration
 
+### ErrorBoundaryView Component
+```tsx
+import { ErrorBoundaryProps } from 'flexdi/react'
+import { Component, ErrorInfo, ReactNode } from 'react'
+
+interface ErrorBoundaryState {
+  hasError: boolean
+}
+
+export class ErrorBoundaryView extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+
+  constructor(props: ErrorBoundaryProps) {
+    super(props)
+    this.state = {hasError: false}
+  }
+
+  static getDerivedStateFromError(e: Error): ErrorBoundaryState {
+    console.error(e)
+    return {hasError: true}
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('Error boundary: ', error, errorInfo)
+  }
+
+  render(): ReactNode {
+    if (this.state.hasError) {
+      return this.props.fallback || <h2>Something went wrong.</h2>
+    }
+
+    return this.props.children
+  }
+}
+```
+
 ### RootModuleLoader
 
 Component for loading the root module of the application:
@@ -378,9 +425,9 @@ Component for loading the root module of the application:
 ```tsx
 <RootModuleLoader
   module={AppModule}
-  ErrorBoundary={ErrorBoundary}
-  LoadingComponent={Loading}
-  ErrorComponent={Error}
+  ErrorBoundary={ErrorBoundaryView}
+  LoadingComponent={LoadingView}
+  ErrorComponent={ErrorView}
   enableStrictMode={false} // true ONLY if <StrictMode> is used and you are in dev mode
 >
   <App />
@@ -396,9 +443,9 @@ Component for loading a module and its dependencies:
 ```tsx
 <ModuleLoader
   module={FeatureModule}
-  ErrorBoundary={ErrorBoundary}
-  LoadingComponent={Loading}
-  ErrorComponent={Error}
+  ErrorBoundary={ErrorBoundaryView}
+  LoadingComponent={LoadingView}
+  ErrorComponent={ErrorView}
 >
   <FeatureComponent />
 </ModuleLoader>
@@ -409,7 +456,7 @@ Component for loading a module and its dependencies:
 Hook for injecting dependencies into functional components:
 
 ```tsx
-const userService = useInject(UserService);
+const userService = useInject(UserService)
 ```
 
 ### usePresenter
@@ -418,7 +465,7 @@ Hook for working with presenters, automatically manages their lifecycle:
 
 ```tsx
 // Parameters are passed to the init(args?: InitArgs) -> ready(args?: InitArgs) method and are available through this.args
-const presenter = usePresenter(UserPresenter, { userId: '123' });
+const presenter = usePresenter(UserPresenter, { userId: '123' })
 ```
 
 ### useObservable
@@ -426,7 +473,7 @@ const presenter = usePresenter(UserPresenter, { userId: '123' });
 Hook for subscribing to Observable with automatic unsubscription:
 
 ```tsx
-const users = useObservable(presenter.getUsers(), []);
+const users = useObservable(presenter.getUsers(), [])
 ```
 
 ### createModuleRoute
@@ -434,51 +481,60 @@ const users = useObservable(presenter.getUsers(), []);
 Function for creating a React Router route with module support and lazy loading of components:
 
 ```tsx
-import { lazy } from 'react';
-import { createModuleRoute } from 'flexdi/react';
+import { lazy } from 'react'
+import { createModuleRoute } from 'flexdi/react'
 
 // Lazy loading of component
-const UserPage = lazy(() => import('./pages/UserPage'));
+const UserPage = lazy(() => import('./pages/UserPage'))
 
 const route = createModuleRoute({
   path: '/users',
-  module: UserModule,
+  module: UserPageModule,
   Component: UserPage, // Lazily loaded component
   ErrorBoundary: ErrorBoundary,
-  LoadingComponent: Loading,
-  ErrorComponent: Error
-});
+  LoadingComponent: LoadingView,
+  ErrorComponent: ErrorView
+})
 ```
 
 Example usage with multiple routes:
 
 ```tsx
-import { lazy } from 'react';
-import { createBrowserRouter } from 'react-router-dom';
+import { lazy } from 'react'
+import { createBrowserRouter } from 'react-router-dom'
 
-const HomePage = lazy(() => import('./pages/HomePage'));
-const UserPage = lazy(() => import('./pages/UserPage'));
+const HomePage = lazy(() => import('./pages/HomePage'))
+const UserPage = lazy(() => import('./pages/UserPage'))
+
+const createAppRoute = (
+  {
+    path,
+    feature,
+    module
+  }: { path: string, feature: LazyExoticComponent<ComponentType<unknown>>, module: ModuleType }
+) => createModuleRoute({
+  path,
+  module: module,
+  Component: feature,
+  ErrorBoundary: ErrorBoundary,
+  LoadingComponent: LoadingView,
+  ErrorComponent: ErrorView,
+})
 
 const appRoutes = [
-  createModuleRoute({
+  createAppRoute({
     path: '/',
-    module: HomeModule,
-    Component: HomePage,
-    ErrorBoundary: ErrorBoundary,
-    LoadingComponent: Loading,
-    ErrorComponent: Error
+    feature: HomePage,
+    module: HomePageModule,
   }),
-  createModuleRoute({
+  createAppRoute({
     path: '/users',
-    module: UserModule,
-    Component: UserPage,
-    ErrorBoundary: ErrorBoundary,
-    LoadingComponent: Loading,
-    ErrorComponent: Error
+    feature: UserPage,
+    module: UserPageModule,
   })
-];
+]
 
-const router = createBrowserRouter(appRoutes);
+const router = createBrowserRouter(appRoutes)
 ```
 
 ## Usage Examples
@@ -486,20 +542,25 @@ const router = createBrowserRouter(appRoutes);
 ### Basic Application Example with Abstract Service
 
 ```tsx
+export interface User {
+  name: string
+  role: string
+}
+
 // Defining an abstract class and implementation
 export abstract class AuthService {
-  abstract isAuthenticated(): boolean;
-  abstract getUserInfo(): { name: string; role: string };
+  abstract isAuthenticated(): boolean
+  abstract getUserInfo(): User
 }
 
 @Injectable()
 class AuthServiceImpl extends AuthService {
-  isAuthenticated() {
-    return true;
+  isAuthenticated(): boolean {
+    return true
   }
 
-  getUserInfo() {
-    return { name: 'Admin', role: 'admin' };
+  getUserInfo(): User {
+    return { name: 'Admin', role: 'admin' }
   }
 }
 
@@ -516,35 +577,35 @@ class AuthModule {}
 // Presenter uses abstract class
 @Injectable()
 class UserPresenter extends BasicPresenter<void> {
-  private isAuthenticated = new BehaviorSubject<boolean>(false);
-  private userInfo = new BehaviorSubject<{ name: string; role: string }>({ name: '', role: '' });
+  private isAuthenticated = new BehaviorSubject<boolean>(false)
+  private userInfo = new BehaviorSubject<User>({ name: '', role: '' })
 
   constructor(@Inject(AuthService) private authService: AuthService) {
-    super();
+    super()
   }
 
   ready() {
-    console.log('UserPresenter initialized');
-    this.updateUserState();
+    console.log('UserPresenter initialized')
+    this.updateUserState()
   }
 
   destroy() {
-    console.log('UserPresenter destroyed');
-    this.isAuthenticated.complete();
-    this.userInfo.complete();
+    console.log('UserPresenter destroyed')
+    this.isAuthenticated.complete()
+    this.userInfo.complete()
   }
 
   private updateUserState() {
-    this.isAuthenticated.next(this.authService.isAuthenticated());
-    this.userInfo.next(this.authService.getUserInfo());
+    this.isAuthenticated.next(this.authService.isAuthenticated())
+    this.userInfo.next(this.authService.getUserInfo())
   }
 
   isUserAuthenticated(): Observable<boolean> {
-    return this.isAuthenticated.asObservable();
+    return this.isAuthenticated.asObservable()
   }
 
-  getUserInfo(): Observable<{ name: string; role: string }> {
-    return this.userInfo.asObservable();
+  getUserInfo(): Observable<User> {
+    return this.userInfo.asObservable()
   }
 }
 
@@ -557,9 +618,9 @@ class UserModule {}
 
 // React component
 const App = () => {
-  const presenter = usePresenter(UserPresenter);
-  const userInfo = useObservable(presenter.getUserInfo(), { name: '', role: '' });
-  const isAuthenticated = useObservable(presenter.isUserAuthenticated(), false);
+  const presenter = usePresenter(UserPresenter)
+  const userInfo = useObservable(presenter.getUserInfo(), { name: '', role: '' })
+  const isAuthenticated = useObservable(presenter.isUserAuthenticated(), false)
 
   return (
     <div>
@@ -567,27 +628,27 @@ const App = () => {
       <p>Role: {userInfo.role}</p>
       <p>Status: {isAuthenticated ? 'Authenticated' : 'Not authenticated'}</p>
     </div>
-  );
-};
+  )
+}
 
 // Application entry point
 createRoot(document.getElementById('root')).render(
   <RootModuleLoader
     module={UserModule}
-    ErrorBoundary={ErrorBoundary}
-    LoadingComponent={LoadingSpinner}
-    ErrorComponent={ErrorView}
+    ErrorBoundary={ErrorBoundaryView}
+    LoadingComponent={LoadingSpinnerView}
+    ErrorComponent={ErrorViewView}
     enableStrictMode={false} // Only if <StrictMode> is used and you are in dev mode
   >
     <ModuleLoader
       module={AppPageModule}
       children={<App />}
-      ErrorBoundary={ErrorBoundary}
-      LoadingComponent={LoadingSpinner}
-      ErrorComponent={ErrorView}
+      ErrorBoundary={ErrorBoundaryView}
+      LoadingComponent={LoadingSpinnerView}
+      ErrorComponent={ErrorViewView}
     />
   </RootModuleLoader>
-);
+)
 ```
 
 ## Usage Tips
@@ -610,11 +671,6 @@ The absence of global providers is a conscious design decision, not a limitation
 
 Circular dependencies between modules are technically possible, but not recommended for maintaining clean architecture and simplifying debugging. Improvements in this area are planned for future versions.
 
-## Working Example
-
-A full-featured React project built using FlexDI can be found in the repository:
-[https://github.com/AndreyShashlovDev/scalpel-frontend](https://github.com/AndreyShashlovDev/scalpel-frontend/tree/master)
-
 ## API Reference
 
 ### ModuleManager
@@ -627,10 +683,10 @@ Loads a module and all its dependencies. If `isRootModule` is set to `true`, the
 
 ```typescript
 // Loading the root module
-await moduleManager.loadModule(AppModule, true);
+await moduleManager.loadModule(AppModule, true)
 
 // Loading a regular module
-await moduleManager.loadModule(FeatureModule);
+await moduleManager.loadModule(FeatureModule)
 ```
 
 #### `getService<T>(moduleClass: ModuleType, token: InjectionToken<unknown>): T`
@@ -639,7 +695,7 @@ Gets a service instance from a loaded module.
 
 ```typescript
 // Getting a service
-const authService = moduleManager.getService<AuthService>(AppModule, AuthService);
+const authService = moduleManager.getService<AuthService>(AppModule, AuthService)
 ```
 
 #### `isModuleLoaded(moduleClass: ModuleType): boolean`
@@ -648,7 +704,7 @@ Checks if a module is loaded.
 
 ```typescript
 if (moduleManager.isModuleLoaded(FeatureModule)) {
-  console.log('Module is already loaded');
+  console.log('Module is already loaded')
 }
 ```
 
@@ -658,7 +714,7 @@ Unloads a module and all its unused dependencies.
 
 ```typescript
 // Unloading a module
-moduleManager.unloadModule(FeatureModule);
+moduleManager.unloadModule(FeatureModule)
 ```
 
 #### `isRootModule(moduleClass: ModuleType): boolean`
@@ -667,7 +723,7 @@ Checks if a module is the root module.
 
 ```typescript
 if (moduleManager.isRootModule(AppModule)) {
-  console.log('This is the root module');
+  console.log('This is the root module')
 }
 ```
 
@@ -687,13 +743,17 @@ abstract class DataService {
 
 // Mock service
 @Injectable()
-class MockDataService extends DataService {
+class MockDataServiceImpl extends DataService {
   getData = vi.fn().mockReturnValue(['test', 'data'])
+}
+
+abstract class UserService {
+  abstract processData(): string[]
 }
 
 // Service being tested
 @Injectable()
-class UserService {
+class UserServiceImpl {
   constructor(@Inject(DataService) private dataService: DataService) {}
 
   processData() {
@@ -705,8 +765,8 @@ class UserService {
 // Test module with mock
 @Module({
   providers: [
-    {provide: DataService, useClass: MockDataService},
-    {provide: UserService, useClass: UserService}
+    {provide: DataService, useClass: MockDataServiceImpl},
+    {provide: UserService, useClass: UserServiceImpl}
   ],
   exports: [UserService, DataService]
 })
@@ -714,7 +774,7 @@ class TestModule {}
 
 describe('UserService', () => {
   let userService: UserService
-  let mockDataService: MockDataService
+  let mockDataService: DataService
   let testModuleManager: ModuleManager
 
   beforeEach(async () => {
@@ -726,8 +786,8 @@ describe('UserService', () => {
     await testModuleManager.loadModule(TestModule, true)
 
     // Get services from the test module
-    userService = testModuleManager.getService<UserService>(TestModule, UserService)
-    mockDataService = testModuleManager.getService<MockDataService>(TestModule, DataService)
+    userService = testModuleManager.getService<UserServiceImpl>(TestModule, UserService)
+    mockDataService = testModuleManager.getService<DataService>(TestModule, DataService)
   })
 
   it('should process data correctly', () => {
@@ -737,15 +797,14 @@ describe('UserService', () => {
     expect(result).toEqual(['TEST', 'DATA'])
   })
 })
-
 ```
 
 ### Testing Presenters
 
 ```typescript
-import { BehaviorSubject, firstValueFrom } from 'rxjs'
+import { BasicPresenter, Inject, Injectable, Module, ModuleManager, ModuleManagerFactory } from 'flexdi'
+import { BehaviorSubject, firstValueFrom, Observable } from 'rxjs'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { Inject, Injectable, Module, BasicPresenter, ModuleManager } from 'flexdi'
 
 interface User {
   name: string
@@ -759,14 +818,18 @@ abstract class AuthService {
 
 // Mock service
 @Injectable()
-class MockAuthService extends AuthService {
+class MockAuthServiceImpl extends AuthService {
   isAuthenticated = vi.fn().mockReturnValue(true)
   getUser = vi.fn().mockReturnValue({id: 1, name: 'Test User'})
 }
 
+abstract class UserPresenter extends BasicPresenter<void> {
+  abstract getUser(): Observable<User | null>
+}
+
 // Presenter to test
 @Injectable()
-class UserPresenter extends BasicPresenter<void> {
+class UserPresenterImpl extends UserPresenter {
   private user = new BehaviorSubject<User | null>(null)
 
   constructor(@Inject(AuthService) private authService: AuthService) {
@@ -783,15 +846,15 @@ class UserPresenter extends BasicPresenter<void> {
     this.user.complete()
   }
 
-  getUser() {
+  getUser(): Observable<User | null> {
     return this.user.asObservable()
   }
 }
 
 @Module({
   providers: [
-    {provide: AuthService, useClass: MockAuthService},
-    {provide: UserPresenter, useClass: UserPresenter}
+    {provide: AuthService, useClass: MockAuthServiceImpl},
+    {provide: UserPresenter, useClass: UserPresenterImpl}
   ],
   exports: [AuthService, UserPresenter]
 })
@@ -799,19 +862,20 @@ class TestModule {}
 
 describe('UserPresenter', () => {
   let presenter: UserPresenter
-  let mockAuthService: MockAuthService
+  let mockAuthService: AuthService
   let testModuleManager: ModuleManager
 
   beforeEach(async () => {
+    ModuleManagerFactory.resetInstance()
     // Create a new ModuleManager instance for complete test isolation
-    testModuleManager = new ModuleManager()
+    testModuleManager = ModuleManagerFactory.getInstance()
 
     // Load the test module with our isolated ModuleManager
     await testModuleManager.loadModule(TestModule, true)
 
     // Get services from the test module
     presenter = testModuleManager.getService<UserPresenter>(TestModule, UserPresenter)
-    mockAuthService = testModuleManager.getService<MockAuthService>(TestModule, AuthService)
+    mockAuthService = testModuleManager.getService<MockAuthServiceImpl>(TestModule, AuthService)
 
     // Manual init call, simulating lifecycle
     presenter.init()
@@ -842,22 +906,22 @@ import {
   ModuleManagerFactory,
   ModuleProvider,
 } from 'flexdi'
-
 import {useInject, useObservable, usePresenter} from 'flexdi/react'
 import '@testing-library/jest-dom'
 
 interface User {
-  id: number;
-  name: string;
-  email: string;
+  id: number
+  name: string
+  email: string
 }
 
 abstract class UserService {
-  abstract getUsers(): Observable<User[]>;
+  abstract getUsers(): Observable<User[]>
+  abstract updateUsers(users: User[]): void
 }
 
 @Injectable()
-class MockUserService extends UserService {
+class MockUserServiceImpl extends UserService {
   private users = new BehaviorSubject<User[]>([
     {id: 1, name: 'John Doe', email: 'john@example.com'},
     {id: 2, name: 'Jane Smith', email: 'jane@example.com'}
@@ -872,8 +936,15 @@ class MockUserService extends UserService {
   }
 }
 
+abstract class UserPresenter extends BasicPresenter<void> {
+
+  abstract getUsers(): Observable<User[]>
+
+  abstract filterUsersByName(query: string): void
+}
+
 @Injectable()
-class UserPresenter extends BasicPresenter<void> {
+class UserPresenterImpl extends UserPresenter {
   private filteredUsers = new BehaviorSubject<User[]>([])
 
   constructor(@Inject(UserService) private userService: UserService) {
@@ -911,13 +982,12 @@ class UserPresenter extends BasicPresenter<void> {
 
 @Module({
   providers: [
-    {provide: UserService, useClass: MockUserService},
-    {provide: UserPresenter, useClass: UserPresenter}
+    {provide: UserService, useClass: MockUserServiceImpl},
+    {provide: UserPresenter, useClass: UserPresenterImpl}
   ],
   exports: [UserService, UserPresenter]
 })
 class TestModule {}
-
 
 function UserList() {
   const presenter = usePresenter(UserPresenter)
@@ -930,8 +1000,8 @@ function UserList() {
     userService.getUsers()
       .pipe(takeUntil(destroySubject.current))
       .subscribe(users => {
-      count = users.length
-    })
+        count = users.length
+      })
     return count
   }, [userService, destroySubject.current])
 
@@ -972,21 +1042,21 @@ function TestApp() {
 
 describe('UserList Component with DI', () => {
   let testModuleManager: ModuleManager
-  let mockUserService: MockUserService
+  let mockUserService: UserService
 
   beforeEach(async () => {
     ModuleManagerFactory.resetInstance()
     testModuleManager = ModuleManagerFactory.getInstance()
     await testModuleManager.loadModule(TestModule, true)
 
-    mockUserService = testModuleManager.getService<MockUserService>(TestModule, UserService)
+    mockUserService = testModuleManager.getService<UserService>(TestModule, UserService)
   })
 
   it('renders the user list correctly', async () => {
     render(<TestApp />)
-    
+
     expect(screen.getByText('User List')).toBeInTheDocument()
-    
+
     const userCountPresenter = screen.getByTestId('user-count-presenter')
     expect(userCountPresenter).toBeInTheDocument()
     expect(userCountPresenter).toHaveTextContent(/Total users in presenter/)
@@ -994,14 +1064,14 @@ describe('UserList Component with DI', () => {
     const userCountService = screen.getByTestId('user-count-service')
     expect(userCountService).toBeInTheDocument()
     expect(userCountService).toHaveTextContent(/Total users in service/)
-    
+
     await waitFor(() => {
       expect(screen.getByTestId('user-list')).toBeInTheDocument()
     })
-    
+
     expect(screen.getByTestId('user-1')).toBeInTheDocument()
     expect(screen.getByTestId('user-2')).toBeInTheDocument()
-    
+
     expect(screen.getByText('John Doe')).toBeInTheDocument()
     expect(screen.getByText(/jane@example.com/)).toBeInTheDocument()
   })
@@ -1010,7 +1080,7 @@ describe('UserList Component with DI', () => {
     mockUserService.updateUsers([])
 
     render(<TestApp />)
-    
+
     await waitFor(() => {
       expect(screen.getByTestId('empty-message')).toBeInTheDocument()
     })
@@ -1019,17 +1089,17 @@ describe('UserList Component with DI', () => {
 
   it('updates when user service changes', async () => {
     render(<TestApp />)
-    
+
     await waitFor(() => {
       expect(screen.getByTestId('user-list')).toBeInTheDocument()
     })
     expect(screen.getByText('John Doe')).toBeInTheDocument()
-    
+
     const newUsers = [
       {id: 3, name: 'Bob Johnson', email: 'bob@example.com'}
     ]
     mockUserService.updateUsers(newUsers)
-    
+
     await waitFor(() => {
       expect(screen.getByText('Bob Johnson')).toBeInTheDocument()
     })
