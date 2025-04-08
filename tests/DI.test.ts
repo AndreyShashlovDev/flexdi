@@ -1,6 +1,6 @@
 import 'reflect-metadata'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { Inject, Injectable, Module, ModuleManager, ModuleManagerFactory, preloadModule, Scope } from '../src'
+import { Inject, Injectable, Module, ModuleManager, ModuleManagerFactory, preloadModule, Scope } from '../src/core'
 
 describe('Module System', () => {
   let moduleManager: ModuleManager
@@ -637,7 +637,6 @@ describe('Module System', () => {
     test('Error when initializing module with missing dependencies', async () => {
       @Injectable()
       class ServiceWithMissingDependency {
-        // @ts-expect-error isOk
         constructor(@Inject('MissingDependency') private readonly dependency: any) {}
       }
 

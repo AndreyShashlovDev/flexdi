@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "es2018",
+    "target": "ES2020",
     "module": "esnext",
     "moduleResolution": "node",
     "declaration": true,
@@ -14,15 +14,14 @@
     "jsx": "react",
     "isolatedModules": true,
     "moduleDetection": "force",
-    "noEmit": false,  // Изменил на false
+    "noEmit": false,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
+    "useDefineForClassFields": true,
     "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
+      "ES2020", "DOM", "DOM.Iterable", "esnext"
     ],
     "allowSyntheticDefaultImports": true,
     "sourceMap": true,

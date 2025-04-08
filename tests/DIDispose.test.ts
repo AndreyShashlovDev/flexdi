@@ -1,6 +1,6 @@
 import 'reflect-metadata'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { Injectable, Module, ModuleManager, ModuleManagerFactory, OnDisposeInstance, preloadModule } from '../src'
+import { Injectable, Module, ModuleManager, ModuleManagerFactory, OnDisposeInstance, preloadModule } from '../src/core'
 
 describe('onDisposeInstance Lifecycle', () => {
   let moduleManager: ModuleManager

@@ -18,7 +18,7 @@ export interface ModuleLoaderProps {
   ErrorComponent: FC
 }
 
-export interface RootModuleLoader extends ModuleLoaderProps {
+export interface RootModuleLoaderProps extends ModuleLoaderProps {
   enableStrictMode: boolean
 }
 
@@ -33,7 +33,7 @@ export function RootModuleLoader({
   LoadingComponent,
   ErrorComponent,
   enableStrictMode,
-}: RootModuleLoader) {
+}: RootModuleLoaderProps) {
   ENABLE_STRICT_MODE = enableStrictMode
 
   return InternalModuleLoader({module, children, ErrorBoundary, LoadingComponent, ErrorComponent, isRootModule: true})

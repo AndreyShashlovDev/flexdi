@@ -2,19 +2,9 @@ import { render, screen, waitFor } from '@testing-library/react'
 import React, { useLayoutEffect, useRef } from 'react'
 import { BehaviorSubject, Observable, Subject, takeUntil } from 'rxjs'
 import { beforeEach, describe, expect, it } from 'vitest'
-import {
-  BasicPresenter,
-  Inject,
-  Injectable,
-  Module,
-  ModuleManager,
-  ModuleManagerFactory,
-  ModuleProvider,
-  useInject,
-  useObservable,
-  usePresenter
-} from '../src'
+import { BasicPresenter, Inject, Injectable, Module, ModuleManager, ModuleManagerFactory, } from '../src/core'
 import '@testing-library/jest-dom'
+import { ModuleProvider, useInject, useObservable, usePresenter } from '../src/react'
 
 interface User {
   id: number;

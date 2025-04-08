@@ -10,20 +10,38 @@
   "bugs": {
     "url": "https://github.com/AndreyShashlovDev/flexdi/issues"
   },
-  "main": "./dist/cjs/core/index.js",
-  "module": "./dist/esm/core/index.js",
+  "main": "./dist/core/index.cjs",
+  "module": "./dist/core/index.mjs",
   "types": "./dist/types/core/index.d.ts",
   "type": "module",
   "exports": {
     ".": {
       "types": "./dist/types/core/index.d.ts",
-      "import": "./dist/esm/core/index.js",
-      "require": "./dist/cjs/core/index.js"
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
     },
     "./react": {
       "types": "./dist/types/react/index.d.ts",
-      "import": "./dist/esm/react/index.js",
-      "require": "./dist/cjs/react/index.js"
+      "import": "./dist/react/index.mjs",
+      "require": "./dist/react/index.cjs"
+    },
+    "./vue3": {
+      "types": "./dist/types/vue3/index.d.ts",
+      "import": "./dist/vue3/index.mjs",
+      "require": "./dist/vue3/index.cjs"
+    }
+  },
+  "typesVersions": {
+    "*": {
+      "*": [
+        "dist/types/core/index.d.ts"
+      ],
+      "react": [
+        "dist/types/react/index.d.ts"
+      ],
+      "vue3": [
+        "dist/types/vue3/index.d.ts"
+      ]
     }
   },
   "files": [
@@ -31,8 +49,7 @@
   ],
   "scripts": {
     "clean": "rimraf dist",
-    "build": "rollup -c rollup.config.mjs && tsc --project tsconfig.json",
-    "dev": "rollup -c rollup.config.mjs -w",
+    "build": "vite build",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
@@ -46,22 +63,26 @@
   "peerDependencies": {
     "react": "^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^6.0.0 || ^7.0.0"
+    "rxjs": "^6.0.0 || ^7.0.0",
+    "vue": "^3.0.0"
   },
   "peerDependenciesMeta": {
     "react": {
+      "optional": true
+    },
+    "vue": {
       "optional": true
     },
     "rxjs": {
       "optional": true
     }
   },
+  "vite": {
+    "optimizeDeps": {
+      "disabled": true
+    }
+  },
   "devDependencies": {
-    "@rollup/plugin-alias": "^5.1.1",
-    "@rollup/plugin-commonjs": "^28.0.3",
-    "@rollup/plugin-node-resolve": "^15.0.2",
-    "@rollup/plugin-terser": "^0.4.4",
-    "@rollup/plugin-typescript": "^11.1.0",
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/git": "^10.0.1",
     "@semantic-release/npm": "^12.0.1",
@@ -71,21 +92,21 @@
     "@testing-library/user-event": "^14.4.3",
     "@types/node": "^18.15.11",
     "@types/react": "^19.1.0",
-    "@types/react-dom": "^19.1.1",
-    "@vitejs/plugin-react": "^4.0.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "@vitejs/plugin-vue": "^5.2.3",
     "jsdom": "^26.0.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-test-renderer": "^19.1.0",
     "reflect-metadata": "^0.2.2",
     "rimraf": "^5.0.0",
-    "rollup": "^3.20.2",
-    "rollup-plugin-dts": "^5.3.0",
-    "rollup-plugin-peer-deps-external": "^2.2.4",
     "rxjs": "^7.8.2",
     "semantic-release": "^24.2.3",
     "tslib": "^2.5.0",
     "typescript": "^5.0.4",
-    "vitest": "^3.1.1"
+    "vite": "^6.2.5",
+    "vite-plugin-dts": "^4.5.3",
+    "vitest": "^3.1.1",
+    "vue": "^3.5.13"
   }
 }

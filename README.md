@@ -1,6 +1,6 @@
 # FlexDI
 
-A flexible, efficient, and lightweight dependency injection library for React applications. Future versions plan to add Vue support. The current version only implements the React part.
+A flexible, efficient, and lightweight dependency injection library for <b>React/Vue3</b> applications.
 
 The library is inspired by the principles and architectural approach of NestJS and Angular, but adapted for frontend applications.
 
@@ -17,19 +17,14 @@ npm install flexdi reflect-metadata
 yarn add flexdi reflect-metadata
 ```
 
-### React Installation
+### React/Vue3 useObservable under hood use RxJs. 
+#### Additional installation
 ```bash
-npm install flexdi reflect-metadata react
+npm install rxjs
 # or
-yarn add flexdi reflect-metadata react
+yarn add rxjs
 ```
 
-### React (useObservable hook) Installation
-```bash
-npm install flexdi reflect-metadata react rxjs
-# or
-yarn add flexdi reflect-metadata react rxjs
-```
 ## Project configuration
 ### Reflect Metadata
 Add the reflect-metadata import at your application's entry point (before using any decorators):
@@ -51,6 +46,15 @@ Make sure your tsconfig.json includes:
 }
 ```
 
+### Vue3 setup:
+```vue
+import { flexdiPlugin } from 'flexdi/vue3'
+
+createApp(App)
+.use(flexdiPlugin) // add flexdi decorators
+.mount('#app')
+```
+
 ## Core Concepts
 
 FlexDI is built on the following concepts:
@@ -62,10 +66,12 @@ FlexDI is built on the following concepts:
 
 ## Working Example
 
-A full-featured React project built using FlexDI can be found in the repository:
+#### React A full-featured React project built using FlexDI can be found in the repository:
 [https://github.com/AndreyShashlovDev/scalpel-frontend](https://github.com/AndreyShashlovDev/scalpel-frontend/tree/master)
 
-## Using in a React Application
+#### Vue3 Sample project
+[https://github.com/AndreyShashlovDev/flexdi-vue3](https://github.com/AndreyShashlovDev/flexdi-vue3/tree/master)
+## Usage
 
 ### Defining a Module
 
@@ -104,6 +110,16 @@ export class UserServiceImpl {
 }
 ```
 
+### Different modules for React/Vue3
+```typescript
+// react project
+import { RootModuleLoader } from 'flexdi/react'
+
+// vue3 project
+import { RootModuleLoader } from 'flexdi/vue3'
+```
+
+## React
 ### Setting Up the Root Module
 
 Applications should always start with a root module:
@@ -127,6 +143,31 @@ root.render(
 )
 ```
 
+## Vue3
+### Setting Up the Root Module
+
+Applications should always start with a root module:
+```vue
+<script setup lang="ts">
+import { RootModuleLoader } from 'flexdi/vue3'
+import ErrorComponent from './common/app-ui/ErrorComponent.vue'
+import LoadingComponent from './common/app-ui/LoadingComponent.vue'
+import { RootModule } from './RootModule.ts'
+
+const rootModule = RootModule
+</script>
+
+<template>
+  <RootModuleLoader
+      :module="rootModule"
+      :loading-component="LoadingComponent"
+      :error-component="ErrorComponent"
+  >
+    <router-view></router-view>
+  </RootModuleLoader>
+</template>
+
+```
 ### Using Dependencies in React Components
 
 ```tsx
@@ -153,6 +194,45 @@ export const UserList = () => {
     </div>
   )
 }
+```
+
+### Using Dependencies in Vue3 Components
+
+```vue
+<script setup lang="ts">
+import { useInject, useObservable, usePresenter } from 'flexdi/vue3'
+import { ServiceA } from '../../../common/service/ServiceA.ts'
+import { HomePagePresenter } from '../domain/HomePagePresenter.ts'
+
+const presenter = usePresenter(HomePagePresenter, {userId: 123})
+const user = useObservable(presenter.getUser(), null)
+const error = useObservable(presenter.error(), null)
+const isLoading = useObservable(presenter.isLoading(), true)
+
+const serviceA = useInject(ServiceA)
+
+function loadUser() {
+  presenter.onUserLoadClick()
+}
+
+function callServiceA() {
+  serviceA.doSomething()
+}
+</script>
+
+<template>
+  <div>
+    <h1>User home page</h1>
+    <div v-if="isLoading">Loading...</div>
+    <div v-else-if="error">Error is: {{ error }}</div>
+    <div v-else-if="user">
+      <h2>{{ user.name }}</h2>
+      <p>Email: {{ user.email }}</p>
+      <button @click="loadUser()">Load user 123</button>
+      <button @click="callServiceA()">Call service A</button>
+    </div>
+  </div>
+</template>
 ```
 
 ## Detailed Guide
@@ -381,7 +461,7 @@ FlexDI supports asynchronous initialization and the use of Promises:
 export class ConfigModule {}
 ```
 
-## React Integration
+## Integration
 
 ### ErrorBoundaryView Component
 ```tsx
@@ -418,7 +498,7 @@ export class ErrorBoundaryView extends Component<ErrorBoundaryProps, ErrorBounda
 }
 ```
 
-### RootModuleLoader
+### RootModuleLoader React
 
 Component for loading the root module of the application:
 
@@ -436,7 +516,32 @@ Component for loading the root module of the application:
 
 The `enableStrictMode` parameter should be set to `true` ONLY when `<StrictMode>` is used in the application and you are in development mode. Otherwise, be sure to set it to `false`, otherwise the presenters will not receive ready/destroy events and will not work correctly.
 
-### ModuleLoader
+
+### RootModuleLoader Vue3
+
+Component for loading the root module of the application:
+```vue
+<script setup lang="ts">
+import { RootModuleLoader } from 'flexdi/vue3'
+import ErrorComponent from './common/app-ui/ErrorComponent.vue'
+import LoadingComponent from './common/app-ui/LoadingComponent.vue'
+import { RootModule } from './RootModule.ts'
+
+const rootModule = RootModule
+</script>
+
+<template>
+  <RootModuleLoader
+    :module="rootModule"
+    :loading-component="LoadingComponent"
+    :error-component="ErrorComponent"
+  >
+    <router-view></router-view>
+  </RootModuleLoader>
+</template>
+```
+
+### ModuleLoader React
 
 Component for loading a module and its dependencies:
 
@@ -449,6 +554,30 @@ Component for loading a module and its dependencies:
 >
   <FeatureComponent />
 </ModuleLoader>
+```
+
+### ModuleLoader Vue3
+
+Component for loading the root module of the application:
+```vue
+<script setup lang="ts">
+import { ModuleLoader } from 'flexdi/vue3'
+import ErrorComponent from './common/app-ui/ErrorComponent.vue'
+import LoadingComponent from './common/app-ui/LoadingComponent.vue'
+import { FeatureModule } from './FeatureModule.ts'
+
+const featureModule = FeatureModule
+</script>
+
+<template>
+  <ModuleLoader
+    :module="featureModule"
+    :loading-component="LoadingComponent"
+    :error-component="ErrorComponent"
+  >
+    <router-view></router-view>
+  </ModuleLoader>
+</template>
 ```
 
 ### useInject
@@ -476,7 +605,7 @@ Hook for subscribing to Observable with automatic unsubscription:
 const users = useObservable(presenter.getUsers(), [])
 ```
 
-### createModuleRoute
+### createModuleRoute React
 
 Function for creating a React Router route with module support and lazy loading of components:
 
@@ -535,6 +664,29 @@ const appRoutes = [
 ]
 
 const router = createBrowserRouter(appRoutes)
+```
+
+### createModuleRoute Vue3
+
+Function for creating a Vue Router route with module support and lazy loading of components:
+
+```typescript
+import { createModuleRoute } from 'flexdi/vue3'
+import { HomePageModule } from '../../feature/home/di/HomePageModule.ts'
+import ErrorComponent from '../app-ui/ErrorComponent.vue'
+import LoadingComponent from '../app-ui/LoadingComponent.vue'
+
+export default [
+  createModuleRoute({
+    path: '/',
+    name: 'home', // optional
+    // meta?: Record<string, unknown> -- optional
+    module: HomePageModule,
+    component: () => import('../../feature/home/presentation/HomePageView.vue'),
+    loadingComponent: LoadingComponent,
+    errorComponent: ErrorComponent
+  }),
+]
 ```
 
 ## Usage Examples

@@ -1,6 +1,6 @@
 import 'reflect-metadata'
 import { beforeEach, describe, expect, test } from 'vitest'
-import { Inject, Injectable, Module, ModuleManager, ModuleManagerFactory, preloadModule, Singleton } from '../src'
+import { Inject, Injectable, Module, ModuleManager, ModuleManagerFactory, preloadModule, Singleton } from '../src/core'
 
 describe('Singleton Modules', () => {
   let moduleManager: ModuleManager
