@@ -1,12 +1,33 @@
 # FlexDI
 
-A flexible, efficient, and lightweight dependency injection library for <b>React/Vue3</b> applications.
+A flexible, efficient, and lightweight dependency injection library for <b>React / React Native / Vue3</b> applications.
 
 The library is inspired by the principles and architectural approach of NestJS and Angular, but adapted for frontend applications.
 
 FlexDI allows you to organize a modular architecture with separation of concerns, component lifecycle management, and clear separation of business logic from presentation.
 
 > **Note:** This is the first version of the library. The project is open for contributors, and any help is welcome.
+
+## Usage Tips
+
+1. **Code Organization**: Group related services into modules.
+2. **Naming**: Use suffixes for different types of classes (Service, Repository, Presenter).
+3. **Singleton modules**: Use `@Singleton()` for modules that should be available with explicit import without creating new instances.
+4. **Presenters**: Use presenters to separate business logic from UI framework.
+5. **Testing**: The library makes testing easier by allowing real implementations to be replaced with mocks.
+
+## Philosophy and Principles
+
+FlexDI is designed to support SOLID principles and clean architecture:
+- Clear separation of business logic from presentation
+- Separate testing of components
+- High modularity and code reusability
+- Reduction of bugs through strict typing and dependency inversion
+
+The absence of global providers is a conscious design decision, not a limitation. This approach reduces the risk of implicit dependencies and increases code maintainability.
+
+Circular dependencies between modules are technically possible, but not recommended for maintaining clean architecture and simplifying debugging. Improvements in this area are planned for future versions.
+
 
 ## Installation
 
@@ -17,7 +38,7 @@ npm install flexdi reflect-metadata
 yarn add flexdi reflect-metadata
 ```
 
-### React/Vue3 useObservable under hood use RxJs. 
+### React/ReactNative/Vue3 useObservable under hood use RxJs. 
 #### Additional installation
 ```bash
 npm install rxjs
@@ -51,8 +72,43 @@ Make sure your tsconfig.json includes:
 import { flexdiPlugin } from 'flexdi/vue3'
 
 createApp(App)
-.use(flexdiPlugin) // add flexdi decorators
+.use(flexdiPlugin) // add flexdi directives
 .mount('#app')
+```
+
+### ReactNative setup (expo)
+```bash
+npm install babel-plugin-transform-typescript-metadata
+# or
+yarn add babel-plugin-transform-typescript-metadata
+```
+```js 
+// babel.config.js
+
+module.exports = function (api) {
+  api.cache(true)
+  return {
+    presets: ['babel-preset-expo'],
+    plugins: [
+      "babel-plugin-transform-typescript-metadata",
+      ["@babel/plugin-proposal-decorators", { "legacy": true }],
+      ["@babel/plugin-proposal-class-properties", { "loose": true }],
+    ]
+  }
+}
+
+```
+
+```js
+// metro.config.js
+const {getDefaultConfig} = require('@expo/metro-config')
+
+const config = getDefaultConfig(__dirname)
+
+config.resolver.unstable_enablePackageExports = true;
+config.resolver.sourceExts.unshift("mjs");
+
+module.exports = config
 ```
 
 ## Core Concepts
@@ -69,8 +125,12 @@ FlexDI is built on the following concepts:
 #### React A full-featured React project built using FlexDI can be found in the repository:
 [https://github.com/AndreyShashlovDev/scalpel-frontend](https://github.com/AndreyShashlovDev/scalpel-frontend/tree/master)
 
+#### React Native Sample project
+[https://github.com/AndreyShashlovDev/flexdi-rn](https://github.com/AndreyShashlovDev/flexdi-rn/tree/master)
+
 #### Vue3 Sample project
 [https://github.com/AndreyShashlovDev/flexdi-vue3](https://github.com/AndreyShashlovDev/flexdi-vue3/tree/master)
+
 ## Usage
 
 ### Defining a Module
@@ -110,129 +170,16 @@ export class UserServiceImpl {
 }
 ```
 
-### Different modules for React/Vue3
+### Different modules for React/ React Native / Vue3
 ```typescript
 // react project
 import { RootModuleLoader } from 'flexdi/react'
 
+// react native project
+import { RootModuleLoader } from 'flexdi/react-native'
+
 // vue3 project
 import { RootModuleLoader } from 'flexdi/vue3'
-```
-
-## React
-### Setting Up the Root Module
-
-Applications should always start with a root module:
-
-```tsx
-import { RootModuleLoader } from 'flexdi/react'
-import { AppModule } from './modules/app.module'
-import { App } from './App'
-
-const root = createRoot(document.getElementById('root'))
-root.render(
-  <RootModuleLoader
-    module={AppModule}
-    ErrorBoundary={ErrorBoundaryView}
-    LoadingComponent={LoadingSpinner}
-    ErrorComponent={ErrorView}
-    enableStrictMode={false} // true ONLY if <StrictMode> is used and you are in dev mode
-  >
-    <App />
-  </RootModuleLoader>
-)
-```
-
-## Vue3
-### Setting Up the Root Module
-
-Applications should always start with a root module:
-```vue
-<script setup lang="ts">
-import { RootModuleLoader } from 'flexdi/vue3'
-import ErrorComponent from './common/app-ui/ErrorComponent.vue'
-import LoadingComponent from './common/app-ui/LoadingComponent.vue'
-import { RootModule } from './RootModule.ts'
-
-const rootModule = RootModule
-</script>
-
-<template>
-  <RootModuleLoader
-      :module="rootModule"
-      :loading-component="LoadingComponent"
-      :error-component="ErrorComponent"
-  >
-    <router-view></router-view>
-  </RootModuleLoader>
-</template>
-
-```
-### Using Dependencies in React Components
-
-```tsx
-import { usePresenter, useInject, useObservable } from 'flexdi/react'
-import { UserService } from './services/user.service'
-import { UserPresenter } from './presenters/user.presenter'
-
-export const UserList = () => {
-  // Using presenter with automatic initialization and cleanup
-  const presenter = usePresenter(UserPresenter)
-  const users = useObservable(presenter.getUsers(), [])
-  
-  // Using service injection
-  const userService = useInject(UserService)
-  
-  return (
-    <div>
-      <h1>Users</h1>
-      <ul>
-        {users.map(user => (
-          <li key={user.id}>{user.name}</li>
-        ))}
-      </ul>
-    </div>
-  )
-}
-```
-
-### Using Dependencies in Vue3 Components
-
-```vue
-<script setup lang="ts">
-import { useInject, useObservable, usePresenter } from 'flexdi/vue3'
-import { ServiceA } from '../../../common/service/ServiceA.ts'
-import { HomePagePresenter } from '../domain/HomePagePresenter.ts'
-
-const presenter = usePresenter(HomePagePresenter, {userId: 123})
-const user = useObservable(presenter.getUser(), null)
-const error = useObservable(presenter.error(), null)
-const isLoading = useObservable(presenter.isLoading(), true)
-
-const serviceA = useInject(ServiceA)
-
-function loadUser() {
-  presenter.onUserLoadClick()
-}
-
-function callServiceA() {
-  serviceA.doSomething()
-}
-</script>
-
-<template>
-  <div>
-    <h1>User home page</h1>
-    <div v-if="isLoading">Loading...</div>
-    <div v-else-if="error">Error is: {{ error }}</div>
-    <div v-else-if="user">
-      <h2>{{ user.name }}</h2>
-      <p>Email: {{ user.email }}</p>
-      <button @click="loadUser()">Load user 123</button>
-      <button @click="callServiceA()">Call service A</button>
-    </div>
-  </div>
-</template>
 ```
 
 ## Detailed Guide
@@ -463,42 +410,149 @@ export class ConfigModule {}
 
 ## Integration
 
-### ErrorBoundaryView Component
+### useInject
+
+Hook for injecting dependencies into functional components:
+
 ```tsx
-import { ErrorBoundaryProps } from 'flexdi/react'
-import { Component, ErrorInfo, ReactNode } from 'react'
+const userService = useInject(UserService)
+```
 
-interface ErrorBoundaryState {
-  hasError: boolean
-}
+### usePresenter
 
-export class ErrorBoundaryView extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+Hook for working with presenters, automatically manages their lifecycle:
 
-  constructor(props: ErrorBoundaryProps) {
-    super(props)
-    this.state = {hasError: false}
-  }
+```tsx
+// Parameters are passed to the init(args?: InitArgs) -> ready(args?: InitArgs) method and are available through this.args
+const presenter = usePresenter(UserPresenter, { userId: '123' })
+```
 
-  static getDerivedStateFromError(e: Error): ErrorBoundaryState {
-    console.error(e)
-    return {hasError: true}
-  }
+### useObservable
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('Error boundary: ', error, errorInfo)
-  }
+Hook for subscribing to Observable with automatic unsubscription:
 
-  render(): ReactNode {
-    if (this.state.hasError) {
-      return this.props.fallback || <h2>Something went wrong.</h2>
-    }
+```tsx
+const users = useObservable(presenter.getUsers(), [])
+```
 
-    return this.props.children
-  }
+
+## React (basic usage same for ReactNative)
+### Setting Up the Root Module
+
+Applications should always start with a root module:
+
+```tsx
+import { RootModuleLoader, ErrorBoundary } from 'flexdi/react'
+import { AppModule } from './modules/app.module'
+import { App } from './App'
+
+const root = createRoot(document.getElementById('root'))
+root.render(
+  <RootModuleLoader
+    module={AppModule}
+    ErrorBoundary={ErrorBoundary} // is optional (or custom)
+    LoadingComponent={LoadingSpinner}
+    ErrorComponent={ErrorView}
+    enableStrictMode={false} // true ONLY if <StrictMode> is used and you are in dev mode
+  >
+    <App />
+  </RootModuleLoader>
+)
+```
+
+## Vue3
+### Setting Up the Root Module
+
+Applications should always start with a root module:
+```vue
+<script setup lang="ts">
+import { RootModuleLoader } from 'flexdi/vue3'
+import ErrorComponent from './common/app-ui/ErrorComponent.vue'
+import LoadingComponent from './common/app-ui/LoadingComponent.vue'
+import { RootModule } from './RootModule.ts'
+
+const rootModule = RootModule
+</script>
+
+<template>
+  <RootModuleLoader
+      :module="rootModule"
+      :loading-component="LoadingComponent"
+      :error-component="ErrorComponent"
+  >
+    <router-view></router-view>
+  </RootModuleLoader>
+</template>
+
+```
+### Using Dependencies in React / React Native Components
+
+```tsx
+import { usePresenter, useInject, useObservable } from 'flexdi/react'
+import { UserService } from './services/user.service'
+import { UserPresenter } from './presenters/user.presenter'
+
+export const UserList = () => {
+  // Using presenter with automatic initialization and cleanup
+  const presenter = usePresenter(UserPresenter)
+  const users = useObservable(presenter.getUsers(), [])
+  
+  // Using service injection
+  const userService = useInject(UserService)
+  
+  return (
+    <div>
+      <h1>Users</h1>
+      <ul>
+        {users.map(user => (
+          <li key={user.id}>{user.name}</li>
+        ))}
+      </ul>
+    </div>
+  )
 }
 ```
 
-### RootModuleLoader React
+### Using Dependencies in Vue3 Components
+
+```vue
+<script setup lang="ts">
+import { useInject, useObservable, usePresenter } from 'flexdi/vue3'
+import { ServiceA } from '../../../common/service/ServiceA.ts'
+import { HomePagePresenter } from '../domain/HomePagePresenter.ts'
+
+const presenter = usePresenter(HomePagePresenter, {userId: 123})
+const user = useObservable(presenter.getUser(), null)
+const error = useObservable(presenter.error(), null)
+const isLoading = useObservable(presenter.isLoading(), true)
+
+const serviceA = useInject(ServiceA)
+
+function loadUser() {
+  presenter.onUserLoadClick()
+}
+
+function callServiceA() {
+  serviceA.doSomething()
+}
+</script>
+
+<template>
+  <div>
+    <h1>User home page</h1>
+    <div v-if="isLoading">Loading...</div>
+    <div v-else-if="error">Error is: {{ error }}</div>
+    <div v-else-if="user">
+      <h2>{{ user.name }}</h2>
+      <p>Email: {{ user.email }}</p>
+      <button @click="loadUser()">Load user 123</button>
+      <button @click="callServiceA()">Call service A</button>
+    </div>
+  </div>
+</template>
+```
+
+### RootModuleLoader React / ReactNative
 
 Component for loading the root module of the application:
 
@@ -541,18 +595,22 @@ const rootModule = RootModule
 </template>
 ```
 
-### ModuleLoader React
+### ModuleLoader React / React Native
 
 Component for loading a module and its dependencies:
 
 ```tsx
 <ModuleLoader
   module={FeatureModule}
+  // children?: ReactNode
+  // or
+  // Component?: ComponentType<any>
   ErrorBoundary={ErrorBoundaryView}
   LoadingComponent={LoadingView}
   ErrorComponent={ErrorView}
 >
-  <FeatureComponent />
+  {/*children*/}
+  <FeatureComponent /> 
 </ModuleLoader>
 ```
 
@@ -578,31 +636,6 @@ const featureModule = FeatureModule
     <router-view></router-view>
   </ModuleLoader>
 </template>
-```
-
-### useInject
-
-Hook for injecting dependencies into functional components:
-
-```tsx
-const userService = useInject(UserService)
-```
-
-### usePresenter
-
-Hook for working with presenters, automatically manages their lifecycle:
-
-```tsx
-// Parameters are passed to the init(args?: InitArgs) -> ready(args?: InitArgs) method and are available through this.args
-const presenter = usePresenter(UserPresenter, { userId: '123' })
-```
-
-### useObservable
-
-Hook for subscribing to Observable with automatic unsubscription:
-
-```tsx
-const users = useObservable(presenter.getUsers(), [])
 ```
 
 ### createModuleRoute React
@@ -666,6 +699,94 @@ const appRoutes = [
 const router = createBrowserRouter(appRoutes)
 ```
 
+### createModuleScreen / createModuleNavigator React Native
+Function for creating a React native navigation with module support and lazy loading of components:
+
+```tsx
+import { createStackNavigator } from '@react-navigation/stack'
+import { createModuleNavigator, createModuleScreen, ErrorBoundary } from 'flexdi/react-native'
+import React from 'react'
+import ErrorScreen from '../common/app-ui/ErrorScreen'
+import LoadingScreen from '../common/app-ui/LoadingScreen'
+import { CounterScreenModule } from '../feature/counter/di/CounterScreenModule'
+import CounterScreen from '../feature/counter/presentation/CounterScreen'
+import { HomeScreenModule } from '../feature/home/di/HomeScreenModule'
+import HomeScreen from '../feature/home/presentation/HomeScreen'
+import { ProfileScreenModule } from '../feature/user/di/ProfileScreenModule'
+import ProfileScreen from '../feature/user/presentation/ProfileScreen'
+import { NavigationScreen } from './NavigationScreen'
+
+const Stack = createStackNavigator()
+
+// external screen creation
+const CounterScreenWithModule = createModuleScreen({
+  module: CounterScreenModule,
+  Component: CounterScreen,
+  LoadingComponent: LoadingScreen,
+  ErrorComponent: ErrorScreen,
+  ErrorBoundary: ErrorBoundary,
+  navigationOptions: {
+    title: 'Counter'
+  }
+})
+
+const navigatorConfig = createModuleNavigator({
+  type: 'stack',
+  screens: [
+    {
+      name: NavigationScreen.HOME,
+      Component: HomeScreen,
+      module: HomeScreenModule,
+      options: {title: 'Main'}
+    },
+    {
+      name: NavigationScreen.PROFILE,
+      Component: ProfileScreen,
+      module: ProfileScreenModule,
+      options: {title: 'Profile'}
+    }
+  ],
+  defaultScreenOptions: {
+    headerStyle: {
+      backgroundColor: '#4a90e2',
+    },
+    headerTintColor: '#fff',
+    headerTitleStyle: {
+      fontWeight: 'bold',
+    },
+  },
+  LoadingComponent: LoadingScreen,
+  ErrorComponent: ErrorScreen,
+  // ErrorBoundary:  optional (used by default boundary)
+})
+
+const AppNavigator = () => {
+  return (
+    <Stack.Navigator
+      initialRouteName={NavigationScreen.HOME}
+      screenOptions={navigatorConfig.navigatorOptions}
+    >
+      {navigatorConfig.screens.map(screen => (
+        <Stack.Screen
+          key={screen.name}
+          name={screen.name}
+          component={screen.component}
+          options={screen.component.navigationOptions}
+        />
+      ))}
+      <Stack.Screen
+        name={NavigationScreen.COUNTER}
+        component={CounterScreenWithModule}
+        options={CounterScreenWithModule.navigationOptions}
+      />
+    </Stack.Navigator>
+  )
+}
+
+export default AppNavigator
+
+```
+
 ### createModuleRoute Vue3
 
 Function for creating a Vue Router route with module support and lazy loading of components:
@@ -694,6 +815,8 @@ export default [
 ### Basic Application Example with Abstract Service
 
 ```tsx
+import { BasicPresenter } from './BasicPresenter'
+
 export interface User {
   name: string
   role: string
@@ -702,6 +825,7 @@ export interface User {
 // Defining an abstract class and implementation
 export abstract class AuthService {
   abstract isAuthenticated(): boolean
+
   abstract getUserInfo(): User
 }
 
@@ -712,7 +836,7 @@ class AuthServiceImpl extends AuthService {
   }
 
   getUserInfo(): User {
-    return { name: 'Admin', role: 'admin' }
+    return {name: 'Admin', role: 'admin'}
   }
 }
 
@@ -720,17 +844,24 @@ class AuthServiceImpl extends AuthService {
 @Module({
   providers: [
     // Binding abstract class to concrete implementation
-    { provide: AuthService, useClass: AuthServiceImpl }
+    {provide: AuthService, useClass: AuthServiceImpl}
   ],
   exports: [AuthService]
 })
 class AuthModule {}
 
+abstract class UserPresenter extends BasicPresenter<void> {
+  
+  abstract isUserAuthenticated(): Observable<boolean>
+
+  abstract getUserInfo(): Observable<User>
+}
+
 // Presenter uses abstract class
 @Injectable()
-class UserPresenter extends BasicPresenter<void> {
+class UserPresenterImpl extends UserPresenter {
   private isAuthenticated = new BehaviorSubject<boolean>(false)
-  private userInfo = new BehaviorSubject<User>({ name: '', role: '' })
+  private userInfo = new BehaviorSubject<User>({name: '', role: ''})
 
   constructor(@Inject(AuthService) private authService: AuthService) {
     super()
@@ -763,7 +894,7 @@ class UserPresenter extends BasicPresenter<void> {
 
 @Module({
   imports: [AuthModule],
-  providers: [{ provide: UserPresenter, useClass: UserPresenterImpl }],
+  providers: [{provide: UserPresenter, useClass: UserPresenterImpl}],
   exports: [UserPresenter]
 })
 class UserModule {}
@@ -771,7 +902,7 @@ class UserModule {}
 // React component
 const App = () => {
   const presenter = usePresenter(UserPresenter)
-  const userInfo = useObservable(presenter.getUserInfo(), { name: '', role: '' })
+  const userInfo = useObservable(presenter.getUserInfo(), {name: '', role: ''})
   const isAuthenticated = useObservable(presenter.isUserAuthenticated(), false)
 
   return (
@@ -794,34 +925,18 @@ createRoot(document.getElementById('root')).render(
   >
     <ModuleLoader
       module={AppPageModule}
-      children={<App />}
+      // children = {}
+      // Component = {}
       ErrorBoundary={ErrorBoundaryView}
       LoadingComponent={LoadingSpinnerView}
       ErrorComponent={ErrorViewView}
-    />
+    >
+      {/* children used */}
+      <App />
+    </ModuleLoader>
   </RootModuleLoader>
 )
 ```
-
-## Usage Tips
-
-1. **Code Organization**: Group related services into modules.
-2. **Naming**: Use suffixes for different types of classes (Service, Repository, Presenter).
-3. **Singleton modules**: Use `@Singleton()` for modules that should be available with explicit import without creating new instances.
-4. **Presenters**: Use presenters to separate business logic from UI framework.
-5. **Testing**: The library makes testing easier by allowing real implementations to be replaced with mocks.
-
-## Philosophy and Principles
-
-FlexDI is designed to support SOLID principles and clean architecture:
-- Clear separation of business logic from presentation
-- Separate testing of components
-- High modularity and code reusability
-- Reduction of bugs through strict typing and dependency inversion
-
-The absence of global providers is a conscious design decision, not a limitation. This approach reduces the risk of implicit dependencies and increases code maintainability.
-
-Circular dependencies between modules are technically possible, but not recommended for maintaining clean architecture and simplifying debugging. Improvements in this area are planned for future versions.
 
 ## API Reference
 

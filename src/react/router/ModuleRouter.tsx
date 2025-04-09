@@ -1,6 +1,6 @@
 import React, { ComponentType, FC, LazyExoticComponent, Suspense } from 'react'
 import { ModuleType } from '../../core'
-import { ErrorBoundaryProps } from '../provider/ModuleLoader'
+import { ErrorBoundaryProps } from '../component/ErrorBoundary'
 import { ModuleProvider } from '../provider/ModuleProvider'
 import { ModuleGuard } from './ModuleGuard'
 

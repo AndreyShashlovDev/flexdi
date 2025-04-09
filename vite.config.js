@@ -20,7 +20,8 @@ export default defineConfig({
       entry: {
         'index': resolve(__dirname, 'src/core/index.ts'),
         'react/index': resolve(__dirname, 'src/react/index.ts'),
-        'vue3/index': resolve(__dirname, 'src/vue3/index.ts')
+        'react-native/index': resolve(__dirname, 'src/react-native/index.ts'),
+        'vue3/index': resolve(__dirname, 'src/vue3/index.ts'),
       },
       formats: ['es', 'cjs'],
       fileName: (format, entryName) => `${entryName}.${format === 'es' ? 'mjs' : 'cjs'}`

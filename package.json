@@ -25,6 +25,11 @@
       "import": "./dist/react/index.mjs",
       "require": "./dist/react/index.cjs"
     },
+    "./react-native": {
+      "types": "./dist/types/react-native/index.d.ts",
+      "import": "./dist/react-native/index.mjs",
+      "require": "./dist/react-native/index.cjs"
+    },
     "./vue3": {
       "types": "./dist/types/vue3/index.d.ts",
       "import": "./dist/vue3/index.mjs",
@@ -38,6 +43,9 @@
       ],
       "react": [
         "dist/types/react/index.d.ts"
+      ],
+      "react-native": [
+        "dist/types/react-native/index.d.ts"
       ],
       "vue3": [
         "dist/types/vue3/index.d.ts"

@@ -1,21 +1,18 @@
 import React, { ComponentType, FC, ReactNode, Suspense } from 'react'
 import { ModuleType } from '../../core'
+import { ErrorBoundary, ErrorBoundaryProps } from '../component/ErrorBoundary'
 import { ModuleGuard } from '../router/ModuleGuard'
 import { ModuleContext } from './ModuleContext'
 
 export let ENABLE_STRICT_MODE = false
 
-export interface ErrorBoundaryProps {
-  fallback: ReactNode
-  children: ReactNode
-}
-
 export interface ModuleLoaderProps {
   module: ModuleType
-  children: ReactNode
-  ErrorBoundary: ComponentType<ErrorBoundaryProps>
+  children?: ReactNode
+  Component?: ComponentType<any>
   LoadingComponent: FC
   ErrorComponent: FC
+  ErrorBoundary?: ComponentType<ErrorBoundaryProps>
 }
 
 export interface RootModuleLoaderProps extends ModuleLoaderProps {
@@ -29,6 +26,7 @@ interface InternalModuleLoaderProps extends ModuleLoaderProps {
 export function RootModuleLoader({
   module,
   children,
+  Component,
   ErrorBoundary,
   LoadingComponent,
   ErrorComponent,
@@ -36,29 +34,50 @@ export function RootModuleLoader({
 }: RootModuleLoaderProps) {
   ENABLE_STRICT_MODE = enableStrictMode
 
-  return InternalModuleLoader({module, children, ErrorBoundary, LoadingComponent, ErrorComponent, isRootModule: true})
+  return InternalModuleLoader({
+    module,
+    children,
+    Component,
+    ErrorBoundary,
+    LoadingComponent,
+    ErrorComponent,
+    isRootModule: true
+  })
 }
 
 export function ModuleLoader({
   module,
   children,
+  Component,
   ErrorBoundary,
   LoadingComponent,
   ErrorComponent,
 }: ModuleLoaderProps) {
-  return InternalModuleLoader({module, children, ErrorBoundary, LoadingComponent, ErrorComponent, isRootModule: false})
+  return InternalModuleLoader({
+    module,
+    children,
+    Component,
+    ErrorBoundary,
+    LoadingComponent,
+    ErrorComponent,
+    isRootModule: false
+  })
 }
 
 function InternalModuleLoader({
   module,
   children,
-  ErrorBoundary,
+  Component,
+  ErrorBoundary: CustomErrorBoundary,
   LoadingComponent,
   ErrorComponent,
   isRootModule,
 }: InternalModuleLoaderProps) {
+  const BoundaryComponent = CustomErrorBoundary || ErrorBoundary
+  const content = children || (Component ? <Component /> : null)
+
   return (
-    <ErrorBoundary fallback={<ErrorComponent />}>
+    <BoundaryComponent fallback={<ErrorComponent />}>
       <Suspense fallback={<LoadingComponent />}>
         <ModuleGuard
           module={module}
@@ -67,10 +86,10 @@ function InternalModuleLoader({
           isRootModule={isRootModule}
         >
           <ModuleContext.Provider value={{moduleClass: module}}>
-          {children}
+          {content}
           </ModuleContext.Provider>
         </ModuleGuard>
       </Suspense>
-    </ErrorBoundary>
+    </BoundaryComponent>
   )
 }
