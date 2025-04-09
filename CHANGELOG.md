@@ -1,3 +1,10 @@
+# [0.4.0](https://github.com/AndreyShashlovDev/flexdi/compare/0.3.0...0.4.0) (2025-04-09)
+
+
+### Features
+
+* support React Native ([1540526](https://github.com/AndreyShashlovDev/flexdi/commit/1540526a98490510e5919fdb6bf13bbbbc0b3c3a))
+
 # [0.3.0](https://github.com/AndreyShashlovDev/flexdi/compare/0.2.4...0.3.0) (2025-04-08)
 
 
