@@ -1,3 +1,10 @@
+## [0.4.1](https://github.com/AndreyShashlovDev/flexdi/compare/0.4.0...0.4.1) (2025-04-10)
+
+
+### Bug Fixes
+
+* throw error if provider pre-initialization fails ([63148bc](https://github.com/AndreyShashlovDev/flexdi/commit/63148bc05e73db11d363d2d5e86e193815fe5300))
+
 # [0.4.0](https://github.com/AndreyShashlovDev/flexdi/compare/0.3.0...0.4.0) (2025-04-09)
 
 
