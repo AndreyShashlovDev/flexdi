@@ -536,7 +536,9 @@ export class ModuleRef {
           }
 
         } catch (error) {
-          console.error(`Failed to pre-initialize export ${getTokenDebugName(exportToken)}`)
+          const msg = `Failed to pre-initialize export ${getTokenDebugName(exportToken)}. Module ${this.name}`
+          console.error(msg)
+          throw new Error(msg)
         }
       }
     }
@@ -634,7 +636,9 @@ export class ModuleRef {
         this.instanceCache.set(tokenName, instance)
       } catch (error) {
         console.error(error)
-        console.error(`Failed to pre-initialize provider ${getTokenDebugName(tokenName)}`)
+        const msg = `Failed to pre-initialize provider ${getTokenDebugName(tokenName)}. Module ${this.name}`
+        console.error(msg)
+        throw new Error(msg)
       }
     }
   }
