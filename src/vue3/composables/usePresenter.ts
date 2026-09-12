@@ -1,5 +1,5 @@
 import { onMounted, onUnmounted } from 'vue'
-import { BasicPresenter, InjectionToken, ModuleManagerFactory } from '../../core'
+import { acquirePresenter, BasicPresenter, InjectionToken, ModuleManagerFactory, releasePresenter } from '../../core'
 import { useCurrentModule } from './useCurrentModule'
 
 export function usePresenter<T extends BasicPresenter<A>, A>(
@@ -20,11 +20,11 @@ export function usePresenter<T extends BasicPresenter<A>, A>(
   }
 
   onMounted(() => {
-    presenter.init(args)
+    acquirePresenter(presenter, args)
   })
 
   onUnmounted(() => {
-    presenter.destroy()
+    releasePresenter(presenter)
   })
 
   return presenter

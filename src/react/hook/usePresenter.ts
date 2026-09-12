@@ -1,5 +1,5 @@
 import { useLayoutEffect, useMemo, useRef } from 'react'
-import { BasicPresenter, InjectionToken, ModuleManagerFactory } from '../../core'
+import { acquirePresenter, BasicPresenter, InjectionToken, ModuleManagerFactory, releasePresenter } from '../../core'
 import { ENABLE_STRICT_MODE } from '../provider'
 import { useCurrentModule } from './useCurrentModule'
 
@@ -30,13 +30,13 @@ export function usePresenter<T extends BasicPresenter<A>, A>(
 
     // In StrictMode it is called twice, in Production once
     if (index === strictCallsCount || isFirstInit.current) {
-      presenter.init(args)
+      acquirePresenter(presenter, args)
       isFirstInit.current = true
     }
 
     return () => {
       if (index === strictCallsCount || isFirstInit.current) {
-        presenter.destroy()
+        releasePresenter(presenter)
         indexForStrictMode.current = 0
       }
     }
