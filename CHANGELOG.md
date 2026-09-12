@@ -1,3 +1,18 @@
+# [0.5.0](https://github.com/AndreyShashlovDev/flexdi/compare/0.4.1...0.5.0) (2026-09-12)
+
+
+### Bug Fixes
+
+* add optional deps to useObservable to avoid resubscribe churn ([86e44d6](https://github.com/AndreyShashlovDev/flexdi/commit/86e44d636ad290e476878d5242d8543838a30811))
+* detect circular module imports instead of overflowing the stack ([d9db8af](https://github.com/AndreyShashlovDev/flexdi/commit/d9db8afea24ac074b1a7dee7a5755934297a18fc))
+* honor TRANSIENT scope in getService/useInject/usePresenter ([0ae0fe8](https://github.com/AndreyShashlovDev/flexdi/commit/0ae0fe87468268e2e1245da089e31ff2f014d615))
+* reference-count presenter init/destroy across shared consumers ([fdd9806](https://github.com/AndreyShashlovDev/flexdi/commit/fdd9806b145282e8edd016440faf65d218b95787))
+
+
+### Features
+
+* infer constructor deps from design:paramtypes when @Inject is omitted ([8aebdeb](https://github.com/AndreyShashlovDev/flexdi/commit/8aebdeb11f375a51588ef5eba69f6fde3878fadf))
+
 ## [0.4.1](https://github.com/AndreyShashlovDev/flexdi/compare/0.4.0...0.4.1) (2025-04-10)
 
 
