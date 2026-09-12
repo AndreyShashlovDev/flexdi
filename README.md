@@ -26,7 +26,14 @@ FlexDI is designed to support SOLID principles and clean architecture:
 
 The absence of global providers is a conscious design decision, not a limitation. This approach reduces the risk of implicit dependencies and increases code maintainability.
 
-Circular dependencies between modules are technically possible, but not recommended for maintaining clean architecture and simplifying debugging. Improvements in this area are planned for future versions.
+The module graph is meant to be a DAG, not just in practice but by design: a cycle between modules
+(module A imports module B which imports module A, directly or through a longer chain) means two
+modules aren't actually separate units of responsibility - they're one module artificially split in
+two. FlexDI treats this as the architectural smell it is rather than something to accommodate: it's
+rejected at load time with a `Circular module dependency detected: ...` error naming the full cycle,
+instead of being left to silently misbehave. The fix is never a workaround in FlexDI itself - it's
+extracting what both modules actually need into a third, genuinely shared module that they both
+import.
 
 
 ## Installation

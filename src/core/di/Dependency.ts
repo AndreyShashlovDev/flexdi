@@ -517,9 +517,20 @@ export class ModuleRef {
     throw new Error(`Provider ${getTokenDebugName(tokenName)} not found in module ${this.name}`)
   }
 
-  public async initialize(rootModule: ModuleRef | null = null): Promise<void> {
+  public async initialize(
+    rootModule: ModuleRef | null = null,
+    initializationPath: Set<string> = new Set()
+  ): Promise<void> {
     if (this.initialized) {
       return
+    }
+
+    if (initializationPath.has(this.name)) {
+      const cyclePath = [...initializationPath, this.name].join(' -> ')
+      throw new Error(
+        `Circular module dependency detected: ${cyclePath}. Circular imports between modules are ` +
+        `not supported - extract the shared providers into a separate module that both import instead.`
+      )
     }
 
     if (this.initializing) {
@@ -535,6 +546,7 @@ export class ModuleRef {
     }
 
     this.initializing = true
+    initializationPath.add(this.name)
 
     try {
       this.rootModule = rootModule || this
@@ -554,7 +566,7 @@ export class ModuleRef {
               this.moduleManagerInstance,
             )
 
-            await importedModule.initialize(this.rootModule)
+            await importedModule.initialize(this.rootModule, initializationPath)
             this.moduleManagerInstance.registerModule(importClass, importedModule)
           }
 
@@ -610,6 +622,7 @@ export class ModuleRef {
       this.initialized = true
     } finally {
       this.initializing = false
+      initializationPath.delete(this.name)
     }
   }
 
