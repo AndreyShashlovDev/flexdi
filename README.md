@@ -111,6 +111,44 @@ config.resolver.sourceExts.unshift("mjs");
 module.exports = config
 ```
 
+### Vite setup
+
+By default, Vite transpiles TypeScript with esbuild, which does not emit `design:paramtypes`
+metadata — so the optional `@Inject()` shorthand described [above](#inject-is-optional-for-class-typed-parameters)
+won't activate. To enable it, swap esbuild's TypeScript/decorators handling for Babel's on
+`.ts`/`.tsx` files:
+
+```bash
+npm install --save-dev vite-plugin-babel babel-plugin-transform-typescript-metadata @babel/plugin-proposal-decorators @babel/plugin-transform-class-properties @babel/preset-typescript
+```
+
+```ts
+// vite.config.ts
+import babel from 'vite-plugin-babel'
+import { defineConfig } from 'vite'
+
+export default defineConfig({
+  plugins: [
+    // ...your other plugins (e.g. @vitejs/plugin-react)
+    babel({
+      include: /\.tsx?$/,
+      babelConfig: {
+        presets: ['@babel/preset-typescript'],
+        plugins: [
+          // must come BEFORE the decorators plugin, or no metadata is emitted
+          'babel-plugin-transform-typescript-metadata',
+          ['@babel/plugin-proposal-decorators', {legacy: true}],
+          ['@babel/plugin-transform-class-properties', {loose: true}],
+        ],
+      },
+    }),
+  ],
+})
+```
+
+Without this setup, FlexDI still works exactly as before — you just need an explicit `@Inject()`
+on every constructor parameter.
+
 ## Core Concepts
 
 FlexDI is built on the following concepts:
@@ -240,6 +278,35 @@ constructor(
   @Inject(SomeRepository) private readonly repo: Repository // Abstract class
 ) {}
 ```
+
+##### `@Inject` is optional for class-typed parameters
+
+`@Inject` is only required when the token can't be inferred from the constructor parameter's own
+TypeScript type — a string/symbol token, or when binding to a different implementation than the
+declared type. When the parameter type itself is a concrete or abstract class, FlexDI can resolve
+it automatically from `design:paramtypes` (the same metadata NestJS/Angular rely on), so `@Inject`
+becomes optional:
+
+```typescript
+@Injectable()
+export class UserServiceImpl {
+  constructor(
+    private readonly userRepository: UserRepository // no @Inject needed — resolved from the parameter's own type
+  ) {}
+}
+```
+
+This only works when your build actually emits `design:paramtypes` metadata for decorated classes:
+- **Works out of the box** with `tsc` (`emitDecoratorMetadata: true`, as configured above).
+- **Requires extra setup** with esbuild-based bundlers (Vite, and by extension most modern
+  React/Vue web setups) — esbuild does not implement `emitDecoratorMetadata`. See
+  [Vite setup](#vite-setup) below.
+- If the metadata isn't emitted, FlexDI simply falls back to requiring an explicit `@Inject()` for
+  that parameter — fully backward compatible, nothing breaks, you just don't get the shorthand.
+
+Types that erase to `Object`/`String`/`Number`/`Boolean`/`Array`/`Function` at runtime (interfaces,
+primitives, generics, `any`) can never be inferred this way and always require an explicit
+`@Inject(token)`.
 
 #### `@Singleton`
 

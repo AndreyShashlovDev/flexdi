@@ -307,19 +307,38 @@ function getClassScope(targetClass: ModuleType): Scope | null {
   return Reflect.getMetadata(SCOPE_METADATA_KEY, targetClass) || null
 }
 
+// Runtime types a TS constructor param type can erase to (interface, generic, any, primitive).
+// A design:paramtypes entry equal to one of these carries no usable identity, so it must not
+// be guessed as a token - the parameter still requires an explicit @Inject().
+const AMBIGUOUS_DESIGN_TYPES = new Set<unknown>([Object, String, Number, Boolean, Array, Function])
+
 function getInjectionTokens(targetClass: ModuleType): any[] {
   try {
     const injectMetadata = Reflect.getMetadata(INJECT_METADATA_KEY, targetClass) || {}
+    const paramTypes: unknown[] = Reflect.getMetadata('design:paramtypes', targetClass) || []
 
-    const maxParamIndex = Object.keys(injectMetadata).length > 0
-      ? Math.max(...Object.keys(injectMetadata).map(Number))
-      : -1
-    const paramsCount = maxParamIndex + 1
+    const explicitIndices = Object.keys(injectMetadata).map(Number)
+    const maxExplicitIndex = explicitIndices.length > 0 ? Math.max(...explicitIndices) : -1
+    const paramsCount = Math.max(maxExplicitIndex + 1, paramTypes.length)
 
-    const params = new Array(paramsCount).fill(null)
+    const params = new Array(paramsCount)
 
-    for (const [index, token] of Object.entries(injectMetadata)) {
-      params[Number(index)] = token
+    for (let index = 0; index < paramsCount; index++) {
+      if (index in injectMetadata) {
+        params[index] = injectMetadata[index]
+        continue
+      }
+
+      // No @Inject() at this position - fall back to the constructor's own parameter type,
+      // as reported by `emitDecoratorMetadata` (works for concrete and abstract classes).
+      const paramType = paramTypes[index]
+
+      params[index] = paramType && !AMBIGUOUS_DESIGN_TYPES.has(paramType)
+        ? paramType
+        : Symbol(
+          `Unresolved constructor param #${index} of ${targetClass.name}: its type has no runtime ` +
+          `identity (interface, primitive, generic or "any"). Add an explicit @Inject(token) for it.`
+        )
     }
 
     return params
