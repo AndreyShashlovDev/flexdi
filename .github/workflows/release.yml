@@ -1,8 +1,10 @@
 name: Release
+
 on:
   push:
     branches:
       - master
+
 jobs:
   release:
     name: Release
@@ -12,6 +14,7 @@ jobs:
       contents: write
       issues: write
       pull-requests: write
+      id-token: write
 
     steps:
       - name: Checkout
@@ -24,6 +27,7 @@ jobs:
         with:
           node-version: '22.14.0'
           cache: 'yarn'
+          registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile
@@ -37,5 +41,4 @@ jobs:
       - name: Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npx semantic-release
