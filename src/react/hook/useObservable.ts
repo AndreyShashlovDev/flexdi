@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react'
+import { DependencyList, useEffect, useState } from 'react'
 import { Observable } from 'rxjs'
 
-export function useObservable<T>(observable: Observable<T>, initialValue: T): T {
+export function useObservable<T>(observable: Observable<T>, initialValue: T, deps?: DependencyList): T {
   const [value, setValue] = useState<T>(initialValue)
 
   useEffect(() => {
@@ -10,7 +10,7 @@ export function useObservable<T>(observable: Observable<T>, initialValue: T): T 
     })
 
     return () => subscription.unsubscribe()
-  }, [observable])
+  }, deps ?? [observable])
 
   return value
 }

@@ -515,6 +515,20 @@ Hook for subscribing to Observable with automatic unsubscription:
 const users = useObservable(presenter.getUsers(), [])
 ```
 
+By default, the hook resubscribes whenever the `Observable` argument itself changes identity -
+which happens on every render if it's called inline like above, since e.g. `Subject#asObservable()`
+returns a new wrapper object each time it's called, not the same reference back. That's harmless for
+a plain `BehaviorSubject`-backed stream (resubscribing just redelivers the current value, and React
+skips the extra render), but it does mean real work re-runs on every render for an observable chain
+that does something on subscribe (an HTTP call behind `switchMap`, a `tap`, opening a connection).
+
+If that matters, pass an explicit third `deps` array (same idea as `useEffect`'s) so it only
+resubscribes when those actually change:
+
+```tsx
+const users = useObservable(presenter.getUsers(), [], [presenter])
+```
+
 
 ## React (basic usage same for ReactNative)
 ### Setting Up the Root Module

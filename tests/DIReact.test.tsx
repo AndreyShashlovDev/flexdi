@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { act, render, screen, waitFor } from '@testing-library/react'
 import React, { useLayoutEffect, useRef } from 'react'
 import { BehaviorSubject, Observable, Subject, takeUntil } from 'rxjs'
 import { beforeEach, describe, expect, it } from 'vitest'
@@ -187,7 +187,9 @@ describe('UserList Component with DI', () => {
     const newUsers = [
       {id: 3, name: 'Bob Johnson', email: 'bob@example.com'}
     ]
-    mockUserService.updateUsers(newUsers)
+    act(() => {
+      mockUserService.updateUsers(newUsers)
+    })
 
     await waitFor(() => {
       expect(screen.getByText('Bob Johnson')).toBeInTheDocument()
