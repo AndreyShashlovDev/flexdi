@@ -262,6 +262,12 @@ export class UserServiceImpl {}
 export class LoggerServiceImpl {}
 ```
 
+`Scope.TRANSIENT` gets a fresh instance every time it's resolved — including through `getService`,
+`useInject`, and `usePresenter`, not just when it's injected as a dependency of another provider.
+The only requirement is that the whole dependency chain resolves synchronously (no `useFactory`
+returning a `Promise` anywhere in it) — `getService`/`useInject`/`usePresenter` are synchronous
+APIs, so an async factory in a TRANSIENT provider's chain throws rather than silently blocking.
+
 #### `@Inject`
 
 Specifies the token for dependency injection in the constructor. The token can be:

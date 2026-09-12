@@ -123,6 +123,34 @@ export class ProviderRef {
 
     this.instance = null
   }
+
+  public resolveSync(): any {
+    if (this.scope === Scope.SINGLETON && this.instance !== null) {
+      return this.instance
+    }
+
+    if (!this.factory) {
+      throw new Error(`Cannot resolve provider ${getTokenDebugName(this.token)}`)
+    }
+
+    const deps = this.dependencies.map(dep => this.moduleRef.resolveDependencySync(dep))
+
+    const result = this.factory(...deps)
+
+    if (result instanceof Promise) {
+      throw new Error(
+        `Provider ${getTokenDebugName(this.token)} uses an asynchronous factory and cannot be resolved ` +
+        `synchronously. TRANSIENT providers accessed through getService()/useInject()/usePresenter() must ` +
+        `resolve synchronously (as must their whole dependency chain).`
+      )
+    }
+
+    if (this.scope === Scope.SINGLETON) {
+      this.instance = result
+    }
+
+    return result
+  }
 }
 
 export class ModuleManager {
@@ -230,10 +258,20 @@ export class ModuleManager {
     // Check export
     if (!moduleRef.isExported(tokenName)) {
       // Check in root module
+      const rootProvider = this.rootModuleRef?.getLocalProvider(tokenName)
+      if (rootProvider?.scope === Scope.TRANSIENT) {
+        return rootProvider.resolveSync()
+      }
       if (this.rootModuleRef?.instanceCache.has(tokenName)) {
         return this.rootModuleRef.instanceCache.get(tokenName)
       }
       throw new Error(`Token ${getTokenDebugName(tokenName)} not exported from module ${moduleClass.name}`)
+    }
+
+    // TRANSIENT providers are never cached - build a fresh instance on every access
+    const provider = moduleRef.getLocalProvider(tokenName)
+    if (provider?.scope === Scope.TRANSIENT) {
+      return provider.resolveSync()
     }
 
     // Get from cache
@@ -378,6 +416,56 @@ export class ModuleRef {
     return this.providers.get(tokenName) || null
   }
 
+  public resolveDependencySync(token: InjectionToken<unknown>): any {
+    const tokenName = getTokenName(token)
+
+    const provider = this.getLocalProvider(tokenName)
+
+    // For Transient scope, don't use cache, always resolve anew
+    if (provider && provider.scope === Scope.TRANSIENT) {
+      return provider.resolveSync()
+    }
+
+    if (this.instanceCache.has(tokenName)) {
+      return this.instanceCache.get(tokenName)
+    }
+
+    if (provider) {
+      const instance = provider.resolveSync()
+      if (provider.scope === Scope.SINGLETON) {
+        this.instanceCache.set(tokenName, instance)
+      }
+      return instance
+    }
+
+    for (const importedModule of this.imports) {
+      if (importedModule.isExported(tokenName)) {
+        try {
+          return importedModule.resolveDependencySync(tokenName)
+        } catch {}
+      }
+    }
+
+    if (this.rootModule && this !== this.rootModule) {
+      try {
+        return this.rootModule.resolveDependencySync(tokenName)
+      } catch {}
+    }
+
+    const parentModules = this.moduleManagerInstance.findParentModules(this.moduleClass)
+
+    for (const parentModule of parentModules) {
+      const parentModuleRef = this.moduleManagerInstance.getLoadedModule(parentModule)
+      if (parentModuleRef) {
+        try {
+          return parentModuleRef.resolveDependencySync(tokenName)
+        } catch {}
+      }
+    }
+
+    throw new Error(`Provider ${getTokenDebugName(tokenName)} not found in module ${this.name}`)
+  }
+
   // Asynchronous provider retrieval
   public async resolveProvider(token: InjectionToken<unknown>): Promise<any> {
     const tokenName = getTokenName(token)
@@ -478,16 +566,7 @@ export class ModuleRef {
               const exportTokenName = getTokenName(exportToken)
 
               if (importedModule.isExported(exportTokenName) && !this.providers.has(exportTokenName)) {
-                // Create provider for re-export
-                const reexportRef = new ProviderRef(exportTokenName, 'token', this)
-                reexportRef.sourceModule = importedModule.name
-                reexportRef.factory = () => this.instanceCache.get(exportTokenName)
-                reexportRef.scope = Scope.SINGLETON
-
-                this.providers.set(exportTokenName, reexportRef)
-
-                // Pre-load for synchronous access
-                this.instanceCache.set(exportTokenName, await importedModule.resolveProvider(exportTokenName))
+                await this.createReexportProvider(exportTokenName, importedModule)
               }
             }
           }
@@ -514,16 +593,7 @@ export class ModuleRef {
             for (const importedModule of this.imports) {
               if (importedModule.isExported(tokenName)) {
                 found = true
-
-                // Register re-exported provider
-                const reexportRef = new ProviderRef(tokenName, 'token', this)
-                reexportRef.sourceModule = importedModule.name
-                reexportRef.factory = () => this.instanceCache.get(tokenName)
-                reexportRef.scope = Scope.SINGLETON
-
-                this.providers.set(tokenName, reexportRef)
-
-                this.instanceCache.set(tokenName, await importedModule.resolveProvider(tokenName))
+                await this.createReexportProvider(tokenName, importedModule)
                 break
               }
             }
@@ -543,6 +613,28 @@ export class ModuleRef {
     }
   }
 
+  private async createReexportProvider(
+    tokenName: string | symbol | Abstract<any>,
+    importedModule: ModuleRef
+  ): Promise<void> {
+    const originScope = importedModule.getLocalProvider(tokenName)?.scope ?? Scope.SINGLETON
+
+    const reexportRef = new ProviderRef(tokenName, 'token', this)
+    reexportRef.sourceModule = importedModule.name
+    reexportRef.scope = originScope
+    reexportRef.factory = originScope === Scope.TRANSIENT
+      ? () => importedModule.resolveDependencySync(tokenName)
+      : () => this.instanceCache.get(tokenName)
+
+    this.providers.set(tokenName, reexportRef)
+
+    const resolved = await importedModule.resolveProvider(tokenName)
+    if (originScope !== Scope.TRANSIENT) {
+      // Pre-load for synchronous access
+      this.instanceCache.set(tokenName, resolved)
+    }
+  }
+
   private async preInitializeExports(): Promise<void> {
     for (const exportToken of this.exports) {
 
@@ -551,7 +643,9 @@ export class ModuleRef {
           const provider = this.providers.get(exportToken)
           if (provider) {
             const instance = await provider.resolve()
-            this.instanceCache.set(exportToken, instance)
+            if (provider.scope !== Scope.TRANSIENT) {
+              this.instanceCache.set(exportToken, instance)
+            }
           }
 
         } catch (error) {
@@ -648,11 +742,14 @@ export class ModuleRef {
 
     this.providers.set(tokenName, providerRef)
 
-    // Pre-load exported providers
+    // Pre-load exported providers (validates the dependency chain eagerly; a TRANSIENT provider's
+    // instance is still discarded rather than cached, so getService() rebuilds a fresh one later)
     if (this.options.exports?.some(exp => getTokenName(exp) === tokenName)) {
       try {
         const instance = await providerRef.resolve()
-        this.instanceCache.set(tokenName, instance)
+        if (providerRef.scope !== Scope.TRANSIENT) {
+          this.instanceCache.set(tokenName, instance)
+        }
       } catch (error) {
         console.error(error)
         const msg = `Failed to pre-initialize provider ${getTokenDebugName(tokenName)}. Module ${this.name}`
