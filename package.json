@@ -1,6 +1,6 @@
 {
   "name": "flexdi",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Framework-agnostic dependency injection that adapts to your favorite UI library",
   "repository": {
     "type": "git",

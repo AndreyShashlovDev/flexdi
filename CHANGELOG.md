@@ -1,3 +1,15 @@
+# [0.6.0](https://github.com/AndreyShashlovDev/flexdi/compare/0.5.0...0.6.0) (2026-09-12)
+
+
+### Bug Fixes
+
+* unload module on ModuleProvider unmount (React) ([4dc447f](https://github.com/AndreyShashlovDev/flexdi/commit/4dc447fe9827549d5d9c8ebad72b0457d3aaeed3))
+
+
+### Features
+
+* add Lit support (controllers, module loader/provider, example app) ([c80aefb](https://github.com/AndreyShashlovDev/flexdi/commit/c80aefb7324381a8489c13d0e08d0316694a9074))
+
 # [0.5.0](https://github.com/AndreyShashlovDev/flexdi/compare/0.4.1...0.5.0) (2026-09-12)
 
 
