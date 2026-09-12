@@ -1,3 +1,10 @@
+## [0.6.1](https://github.com/AndreyShashlovDev/flexdi/compare/0.6.0...0.6.1) (2026-09-12)
+
+
+### Bug Fixes
+
+* pin @semantic-release/npm to 13.x everywhere (unshadow bundled 12.x copy blocking OIDC) ([029f4e1](https://github.com/AndreyShashlovDev/flexdi/commit/029f4e1da04383237a39d5c5621553b08065c5ee))
+
 # [0.6.0](https://github.com/AndreyShashlovDev/flexdi/compare/0.5.0...0.6.0) (2026-09-12)
 
 
