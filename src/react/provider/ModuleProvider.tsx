@@ -29,6 +29,7 @@ export const ModuleProvider = ({module, children}: ModuleProviderProps) => {
 
     return () => {
       mounted = false
+      ModuleManagerFactory.getInstance().unloadModule(module)
     }
   }, [module])
 

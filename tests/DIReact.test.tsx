@@ -1,7 +1,7 @@
 import { act, render, screen, waitFor } from '@testing-library/react'
 import React, { useLayoutEffect, useRef } from 'react'
 import { BehaviorSubject, Observable, Subject, takeUntil } from 'rxjs'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { BasicPresenter, Inject, Injectable, Module, ModuleManager, ModuleManagerFactory, } from '../src/core'
 import '@testing-library/jest-dom'
 import { ModuleProvider, useInject, useObservable, usePresenter } from '../src/react'
@@ -141,6 +141,16 @@ describe('UserList Component with DI', () => {
     mockUserService = testModuleManager.getService<MockUserService>(TestModule, UserService)
   })
 
+  let consoleWarnSpy: ReturnType<typeof vi.spyOn>
+
+  beforeAll(() => {
+    consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+  })
+
+  afterAll(() => {
+    consoleWarnSpy.mockRestore()
+  })
+
   it('renders the user list correctly', async () => {
     render(<TestApp />)
 
@@ -195,5 +205,46 @@ describe('UserList Component with DI', () => {
       expect(screen.getByText('Bob Johnson')).toBeInTheDocument()
     })
     expect(screen.queryByText('John Doe')).not.toBeInTheDocument()
+  })
+})
+
+describe('ModuleProvider used standalone (not inside a Loader/Guard)', () => {
+  it('unloads its module on unmount, same as ModuleLoader/ModuleGuard already do', async () => {
+    @Injectable()
+    class FeatureService {
+      public getValue(): string {
+        return 'feature value'
+      }
+    }
+
+    @Module({
+      providers: [{provide: FeatureService, useClass: FeatureService}],
+      exports: [FeatureService]
+    })
+    class FeatureModule {}
+
+    ModuleManagerFactory.resetInstance()
+    const manager = ModuleManagerFactory.getInstance()
+    await manager.loadModule(FeatureModule)
+
+    function FeatureComponent() {
+      const service = useInject(FeatureService)
+      return <div data-testid="feature-value">{service.getValue()}</div>
+    }
+
+    const {unmount} = render(
+      <ModuleProvider module={FeatureModule}>
+        <FeatureComponent />
+      </ModuleProvider>
+    )
+
+    await waitFor(() => {
+      expect(screen.getByTestId('feature-value')).toHaveTextContent('feature value')
+    })
+    expect(manager.isModuleLoaded(FeatureModule)).toBe(true)
+
+    unmount()
+
+    expect(manager.isModuleLoaded(FeatureModule)).toBe(false)
   })
 })
