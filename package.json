@@ -34,6 +34,11 @@
       "types": "./dist/types/vue3/index.d.ts",
       "import": "./dist/vue3/index.mjs",
       "require": "./dist/vue3/index.cjs"
+    },
+    "./lit": {
+      "types": "./dist/types/lit/index.d.ts",
+      "import": "./dist/lit/index.mjs",
+      "require": "./dist/lit/index.cjs"
     }
   },
   "typesVersions": {
@@ -49,6 +54,9 @@
       ],
       "vue3": [
         "dist/types/vue3/index.d.ts"
+      ],
+      "lit": [
+        "dist/types/lit/index.d.ts"
       ]
     }
   },
@@ -61,6 +69,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "demo:lit": "vite examples/lit",
     "prepublishOnly": "yarn run build",
     "publish:dev": "yalc publish",
     "release": "semantic-release"
@@ -69,6 +78,8 @@
   "author": "",
   "license": "MIT",
   "peerDependencies": {
+    "@lit/context": "^1.0.0",
+    "lit": "^3.0.0",
     "react": "^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^6.0.0 || ^7.0.0",
@@ -81,6 +92,12 @@
     "vue": {
       "optional": true
     },
+    "lit": {
+      "optional": true
+    },
+    "@lit/context": {
+      "optional": true
+    },
     "rxjs": {
       "optional": true
     }
@@ -91,6 +108,7 @@
     }
   },
   "devDependencies": {
+    "@lit/context": "^1.1.6",
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/git": "^10.0.1",
     "@semantic-release/npm": "^12.0.1",
@@ -103,6 +121,7 @@
     "@vitejs/plugin-react": "^4.3.4",
     "@vitejs/plugin-vue": "^5.2.3",
     "jsdom": "^26.0.0",
+    "lit": "^3.3.3",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-test-renderer": "^19.1.0",

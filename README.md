@@ -1,6 +1,6 @@
 # FlexDI
 
-A flexible, efficient, and lightweight dependency injection library for <b>React / React Native / Vue3</b> applications.
+A flexible, efficient, and lightweight dependency injection library for <b>React / React Native / Vue3 / Lit</b> applications.
 
 The library is inspired by the principles and architectural approach of NestJS and Angular, but adapted for frontend applications.
 
@@ -51,6 +51,14 @@ yarn add flexdi reflect-metadata
 npm install rxjs
 # or
 yarn add rxjs
+```
+
+### Lit
+#### Additional installation
+```bash
+npm install lit @lit/context
+# or
+yarn add lit @lit/context
 ```
 
 ## Project configuration
@@ -215,7 +223,7 @@ export class UserServiceImpl {
 }
 ```
 
-### Different modules for React/ React Native / Vue3
+### Different modules for React/ React Native / Vue3 / Lit
 ```typescript
 // react project
 import { RootModuleLoader } from 'flexdi/react'
@@ -225,6 +233,9 @@ import { RootModuleLoader } from 'flexdi/react-native'
 
 // vue3 project
 import { RootModuleLoader } from 'flexdi/vue3'
+
+// lit project - registers <flexdi-root-module-loader> etc. as a side effect of the import
+import 'flexdi/lit'
 ```
 
 ## Detailed Guide
@@ -645,6 +656,111 @@ function callServiceA() {
   </div>
 </template>
 ```
+
+## Lit
+
+Lit support uses [`@lit/context`](https://lit.dev/docs/data/context/) for module propagation and
+[Reactive Controllers](https://lit.dev/docs/composition/controllers/) instead of hooks/composables
+- controllers are meant to be created once in your element's constructor, the same place Lit's own
+docs recommend creating any controller.
+
+### Setting Up the Root Module
+
+```ts
+// main.ts
+import 'reflect-metadata'
+import 'flexdi/lit' // registers <flexdi-root-module-loader>, <flexdi-module-loader>, <flexdi-module-provider>
+import './app-root.element'
+import { AppModule } from './app.module'
+
+const loader = document.createElement('flexdi-root-module-loader') as any
+loader.module = AppModule
+
+const loading = document.createElement('p')
+loading.slot = 'loading'
+loading.textContent = 'Loading...'
+loader.appendChild(loading)
+
+loader.appendChild(document.createElement('app-root'))
+
+document.body.appendChild(loader)
+```
+
+### Using Dependencies in a Lit Component
+
+```ts
+import { html, LitElement } from 'lit'
+import { customElement } from 'lit/decorators.js'
+import { InjectController, ObservableController, PresenterController } from 'flexdi/lit'
+import { ServiceA } from '../../common/service/ServiceA'
+import { HomePagePresenter } from '../domain/HomePagePresenter'
+
+@customElement('home-page')
+class HomePageElement extends LitElement {
+  // Controllers are created once, in the constructor (implicit here as field initializers) -
+  // never inside render(), same as Lit's own guidance for any ReactiveController.
+  private readonly presenterCtrl = new PresenterController(this, HomePagePresenter, {userId: 123})
+  private readonly userCtrl = new ObservableController(this, () => this.presenterCtrl.value.getUser(), null)
+  private readonly serviceACtrl = new InjectController(this, ServiceA)
+
+  protected render() {
+    // A component can connect to the DOM before its module finishes loading (there's no
+    // virtual-DOM reconciler deciding when to instantiate it) - check `.isReady` first, the same
+    // way you'd check a loading flag in the React/Vue3 examples above.
+    if (!this.presenterCtrl.isReady || !this.serviceACtrl.isReady) {
+      return html`<div>Loading...</div>`
+    }
+
+    const user = this.userCtrl.value
+
+    return html`
+      <h1>${user.name}</h1>
+      <p>Email: ${user.email}</p>
+      <button @click=${() => this.presenterCtrl.value.onUserLoadClick()}>Load user 123</button>
+      <button @click=${() => this.serviceACtrl.value.doSomething()}>Call service A</button>
+    `
+  }
+}
+```
+
+Note the property-access difference from hooks: `usePresenter(...)` returns the presenter
+directly, while `PresenterController` is the controller object - the presenter itself is
+`presenterCtrl.value`.
+
+### Root/ModuleLoader for Lit
+
+`<flexdi-root-module-loader>`/`<flexdi-module-loader>` load a module and expose loading/error
+state through **named slots**, since that's the native way to project conditional content in a
+web component - there's no prop-based `LoadingComponent`/`ErrorComponent` reference to pass:
+
+```html
+<flexdi-root-module-loader .module=${AppModule}>
+  <div slot="loading">Loading...</div>
+  <div slot="error">Something went wrong</div>
+  <app-root></app-root>
+</flexdi-root-module-loader>
+```
+
+`<app-root>` (and anything under it) connects to the DOM as soon as the tree it belongs to does -
+there's no virtual-DOM layer deferring its construction the way there is in React/Vue3, so it can't
+be held back until the module is ready. Instead, `PresenterController`/`InjectController`/
+`ObservableController` each expose `.isReady` and only resolve once the loader confirms the module
+actually loaded (they're notified through the same `@lit/context` value the loader provides, which
+it only sets after a successful load) - check it in `render()` before reading `.value`, as in the
+example above.
+
+`<flexdi-module-provider>` is the Lit equivalent of `ModuleProvider` - for a module that's typically
+already re-exported by an ancestor module a `Loader` resolved, with no loading/error state machine
+of its own. It resolves the same way (context is set once loading is confirmed), so it's safe
+either way, whether or not the module happens to already be loaded elsewhere:
+
+```html
+<flexdi-module-provider .module=${FeatureModule}>
+  <feature-root></feature-root>
+</flexdi-module-provider>
+```
+
+There's a working, tested example app in [`examples/lit`](./examples/lit) in this repository.
 
 ### RootModuleLoader React / ReactNative
 

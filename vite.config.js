@@ -22,6 +22,7 @@ export default defineConfig({
         'react/index': resolve(__dirname, 'src/react/index.ts'),
         'react-native/index': resolve(__dirname, 'src/react-native/index.ts'),
         'vue3/index': resolve(__dirname, 'src/vue3/index.ts'),
+        'lit/index': resolve(__dirname, 'src/lit/index.ts'),
       },
       formats: ['es', 'cjs'],
       fileName: (format, entryName) => `${entryName}.${format === 'es' ? 'mjs' : 'cjs'}`
@@ -29,7 +30,10 @@ export default defineConfig({
     outDir: 'dist',
     rollupOptions: {
       makeAbsoluteExternalsRelative: false,
-      external: ['react', 'react/jsx-runtime', 'react-dom', 'vue', 'vue-router', 'rxjs', 'reflect-metadata'],
+      external: [
+        'react', 'react/jsx-runtime', 'react-dom', 'vue', 'vue-router', 'rxjs', 'reflect-metadata',
+        'lit', 'lit/decorators.js', '@lit/context'
+      ],
       output: {
         globals: {
           react: 'React',
@@ -38,7 +42,10 @@ export default defineConfig({
           vue: 'Vue',
           'vue-router': 'VueRouter',
           rxjs: 'rxjs',
-          'reflect-metadata': 'Reflect'
+          'reflect-metadata': 'Reflect',
+          lit: 'Lit',
+          'lit/decorators.js': 'LitDecorators',
+          '@lit/context': 'LitContext'
         },
         preserveModules: true,
         preserveModulesRoot: 'src',
